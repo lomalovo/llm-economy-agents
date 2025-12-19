@@ -1,0 +1,6 @@
+pydantic>=2.0
+pyyaml
+openai
+transformers
+torch
+python-dotenv

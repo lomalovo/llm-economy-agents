@@ -1,0 +1,24 @@
+# Python кеш
+__pycache__/
+*.py[cod]
+*.pyc
+
+# Виртуальное окружение
+venv/
+env/
+.venv/
+
+# Environment variables (API ключи)
+.env
+.env.local
+
+# PyTorch модели
+*.pt
+*.pth
+*.ckpt
+models/
+checkpoints/
+
+# HuggingFace кеш
+.cache/
+transformers_cache/
