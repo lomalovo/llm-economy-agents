@@ -1,4 +1,5 @@
 import sys
+from typing import cast
 from src.utils.config import load_config
 from src.llm.factory import get_llm_backend
 from src.schemas.test_schema import TestAgentDecision
@@ -21,11 +22,11 @@ def main():
     print("\n--- ЗАПУСК ТЕСТОВОГО ЗАПРОСА ---")
     
     try:
-        decision = llm.generate(
+        decision = cast(TestAgentDecision, llm.generate(
             system_prompt="Ты экономический агент.",
             user_prompt="Цена на хлеб выросла. Что будешь делать?",
             schema=TestAgentDecision 
-        )
+        ))
         
         print("\n--- РЕЗУЛЬТАТ ОТ LLM (ТИПИЗИРОВАННЫЙ) ---")
         print(f"Тип объекта: {type(decision)}")

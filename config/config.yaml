@@ -1,8 +1,8 @@
 experiment:
-  name: "test_run_01"
-  description: "Checking infrastructure skeleton"
+  name: "deepseek_test_run"
+  description: "Checking DeepSeek API integration"
 
 llm:
-  backend_type: "dummy"   # Варианты: "dummy", "openai", "huggingface"
-  model_name: "gpt-3.5-turbo" # Или пусть к локальной модели / имя на HF
+  backend_type: "deepseek"  
+  model_name: "deepseek-chat" 
   temperature: 0.7
