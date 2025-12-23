@@ -6,7 +6,7 @@ T = TypeVar("T", bound=BaseModel)
 
 class BaseLLMBackend(ABC):
     @abstractmethod
-    def generate(
+    async def generate(
         self, 
         system_prompt: str, 
         user_prompt: str, 

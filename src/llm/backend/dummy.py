@@ -3,7 +3,7 @@ from pydantic import BaseModel
 from .base import BaseLLMBackend
 
 class DummyBackend(BaseLLMBackend):
-    def generate(
+    async def generate(
         self, 
         system_prompt: str, 
         user_prompt: str, 

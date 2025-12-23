@@ -8,5 +8,11 @@ class BaseAgent(ABC):
         self.money: float = 0.0
 
     @abstractmethod
-    def make_decision(self, market_data: dict):
+    async def make_decision(self, market_data: dict):
         pass
+    
+    def get_stats(self) -> dict:
+        """Возвращает словарь статистики агента"""
+        return {
+            f"{self.id}_money": self.money,
+        }

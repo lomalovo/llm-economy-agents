@@ -1,3 +1,4 @@
+import asyncio
 import time
 from typing import List
 from src.core.state import WorldState
@@ -12,74 +13,82 @@ class SimulationEngine:
         self.cfg = config
         self.state = WorldState()
         self.market = MarketMechanism()
-
-        run_name = config.get("experiment", {}).get("name", "experiment")
+        
+        run_name = config.get("experiment", {}).get("name", "sim_run")
         self.logger = SimulationLogger(run_name)
         
-        self.households: List[HouseholdAgent] = []
-        self.firms: List[FirmAgent] = []
-        
-    def setup(self):
-        """Создаем агентов из конфига"""
-        # Пока хардкод, позже вынесем в конфиг
-        self.households = [
-            HouseholdAgent(f"h_{i}", self.llm, initial_money=200) 
-            for i in range(2) # 2 домохозяйства
-        ]
-        self.firms = [
-            FirmAgent(f"f_{i}", self.llm, initial_capital=1000) 
-            for i in range(1) # 1 фирма
-        ]
-        print(f"Created {len(self.households)} households and {len(self.firms)} firms.")
+        self.households = []
+        self.firms = []
 
-    def step(self):
-        """Один шаг симуляции (Один месяц/квартал)"""
+    def setup(self):
+        agents_cfg = self.cfg.get("agents", {})
+        
+        # 1. Households
+        hh_cfg = agents_cfg.get("households", {"count": 2, "params": {}})
+        count = hh_cfg.get("count", 2)
+        params = hh_cfg.get("params", {"initial_money": 200})
+        
+        self.households = [
+            HouseholdAgent(f"h_{i+1}", self.llm, **params) 
+            for i in range(count)
+        ]
+
+        firm_cfg = agents_cfg.get("firms", {"count": 1, "params": {}})
+        count = firm_cfg.get("count", 1)
+        params = firm_cfg.get("params", {"initial_capital": 1000})
+        
+        self.firms = [
+            FirmAgent(f"f_{i+1}", self.llm, **params) 
+            for i in range(count)
+        ]
+        
+        print(f"Setup complete: {len(self.households)} HHs, {len(self.firms)} Firms.")
+
+    async def step(self):
         self.state.step += 1
         print(f"\n--- STEP {self.state.step} START ---")
         
-        # Подготовка данных рынка для агентов
         market_info = {
             "wage": self.state.avg_wage,
             "price": self.state.avg_price,
-            "last_demand": 100 # Заглушка
+            "last_demand": 100 # TODO: Сделать динамическим
         }
         
-        # ФАЗА 1: Планирование (LLM думают параллельно)
-        print("Agents are thinking...")
-        for agent in self.households + self.firms:
-            # Сохраняем решение внутрь агента
-            agent.current_decision = agent.make_decision(market_info)
-            # Для отладки печатаем одну мысль
-            # print(f"[{agent.id}] {agent.current_decision.reasoning[:50]}...")
-
-        # ФАЗА 2: Рынок Труда
-        L, employment_rate = self.market.clear_labor_market(
-            self.firms, self.households, self.state.avg_wage
-        )
-        self.state.unemployment_rate = 1.0 - employment_rate
-        print(f"Labor Market: Hired {L:.1f}, Unemp Rate: {self.state.unemployment_rate:.1%}")
-
-        # ФАЗА 3: Производство и Рынок Товаров (Цены пока фиксированы для упрощения)
-        # В будущем фирмы будут обновлять self.state.avg_price на основе своих решений
-        sold_qty = self.market.clear_goods_market(
-            self.firms, self.households, self.state.avg_price
-        )
-        print(f"Goods Market: Sold {sold_qty:.1f} units")
+        # --- ФАЗА 1: ПАРАЛЛЕЛЬНОЕ МЫШЛЕНИЕ ---
+        print("Agents are thinking (parallel)...")
+        # Собираем задачи (tasks)
+        tasks = []
+        all_agents = self.households + self.firms
         
-        # Обновляем глобальные цены (на основе решения фирмы, если она одна)
-        # Если фирм много, считаем среднюю
-        new_price_sum = sum(f.current_decision.price_setting for f in self.firms)
-        self.state.avg_price = new_price_sum / len(self.firms)
-        print(f"New Price set for next step: {self.state.avg_price:.2f}")
+        for agent in all_agents:
+            tasks.append(agent.make_decision(market_info))
+            
+        # Запускаем их все разом и ждем завершения
+        # Если агентов 100, это займет столько же времени, сколько для 1 (если API выдержит)
+        results = await asyncio.gather(*tasks)
+        
+        # --- ФАЗА 2: РЫНКИ (Остается синхронной, т.к. считается локально) ---
+        L, emp_rate = self.market.clear_labor_market(self.firms, self.households, self.state.avg_wage)
+        self.state.unemployment_rate = 1.0 - emp_rate
+        
+        sold = self.market.clear_goods_market(self.firms, self.households, self.state.avg_price)
+        
+        # Обновление цен
+        if self.firms:
+            new_price = sum(f.current_decision.price_setting for f in self.firms) / len(self.firms)
+            self.state.avg_price = new_price
+        
+        print(f"Stats: Unemp={self.state.unemployment_rate:.0%}, Sold={sold:.1f}, NewPrice={self.state.avg_price:.2f}")
 
+        # --- ЛОГГИРОВАНИЕ ---
         self.logger.log_step(self.state.step, self.state, self.firms, self.households)
 
-    def run(self, steps=3):
+    async def run(self, steps=3):
         self.setup()
         try:
             for _ in range(steps):
-                self.step()
-                time.sleep(1)
+                await self.step()
+                # time.sleep здесь не нужен, если мы хотим скорость
+                # Но если упираемся в Rate Limit API: await asyncio.sleep(1)
         finally:
             self.logger.save()
-

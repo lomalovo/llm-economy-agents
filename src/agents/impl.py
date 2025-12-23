@@ -18,7 +18,7 @@ class HouseholdAgent(BaseAgent):
         self.last_spent: float = 0.0    # Сколько денег реально потратил
         self.last_bought: float = 0.0   # Сколько товаров реально купил
 
-    def make_decision(self, market_data: dict) -> HouseholdDecision:
+    async def make_decision(self, market_data: dict) -> HouseholdDecision:
         user_msg = HOUSEHOLD_PROMPT.format(
             money=self.money,
             wage=market_data.get("wage", 0),
@@ -28,15 +28,24 @@ class HouseholdAgent(BaseAgent):
         # Если есть история прошлого хода, можно было бы добавить её в промпт сюда
         # Но пока оставляем базовый вариант
         
-        decision = self.llm.generate(
+        decision = await self.llm.generate(
             system_prompt=SYSTEM_PROMPT_ECON,
             user_prompt=user_msg,
             schema=HouseholdDecision
         )
         
-        # Важно: Сохраняем решение в self
         self.current_decision = decision
         return decision
+    
+    def get_stats(self) -> dict:
+        stats = {
+            f"{self.id}_money": round(self.money, 2),
+            f"{self.id}_worked": round(self.last_worked, 2),
+            f"{self.id}_bought": round(self.last_bought, 2),
+        }
+        if self.current_decision:
+             stats[f"{self.id}_target_spend"] = self.current_decision.consumption_budget
+        return stats
 
 
 class FirmAgent(BaseAgent):
@@ -51,7 +60,7 @@ class FirmAgent(BaseAgent):
         self.labor_hired: float = 0.0  # Сколько людей реально наняли
         self.goods_sold: float = 0.0   # Сколько товаров реально продали
 
-    def make_decision(self, market_data: dict) -> FirmDecision:
+    async def make_decision(self, market_data: dict) -> FirmDecision:
         user_msg = FIRM_PROMPT.format(
             money=self.money,
             inventory=self.inventory,
@@ -59,7 +68,7 @@ class FirmAgent(BaseAgent):
             last_demand=market_data.get("last_demand", "неизвестно")
         )
 
-        decision = self.llm.generate(
+        decision = await self.llm.generate(
             system_prompt=SYSTEM_PROMPT_ECON,
             user_prompt=user_msg,
             schema=FirmDecision

@@ -1,8 +1,22 @@
 experiment:
-  name: "deepseek_test_run"
-  description: "Checking DeepSeek API integration"
+  name: "async_test_run"
+  description: "Testing parallel execution"
 
 llm:
-  backend_type: "deepseek"  
-  model_name: "deepseek-chat" 
+  backend_type: "deepseek"
+  model_name: "deepseek-chat"
   temperature: 0.7
+  max_concurrency: 50
+  max_retries: 3
+  timeout: 30
+
+agents:
+  households:
+    count: 5
+    params:
+      initial_money: 300.0
+  
+  firms:
+    count: 2
+    params:
+      initial_capital: 2000.0
