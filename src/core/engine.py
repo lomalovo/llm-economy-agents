@@ -4,6 +4,7 @@ from src.core.state import WorldState
 from src.agents.impl import HouseholdAgent, FirmAgent
 from src.economics.mechanism import MarketMechanism
 from src.llm.backend.base import BaseLLMBackend
+from src.core.logger import SimulationLogger
 
 class SimulationEngine:
     def __init__(self, llm: BaseLLMBackend, config: dict):
@@ -11,6 +12,9 @@ class SimulationEngine:
         self.cfg = config
         self.state = WorldState()
         self.market = MarketMechanism()
+
+        run_name = config.get("experiment", {}).get("name", "experiment")
+        self.logger = SimulationLogger(run_name)
         
         self.households: List[HouseholdAgent] = []
         self.firms: List[FirmAgent] = []
@@ -68,8 +72,14 @@ class SimulationEngine:
         self.state.avg_price = new_price_sum / len(self.firms)
         print(f"New Price set for next step: {self.state.avg_price:.2f}")
 
+        self.logger.log_step(self.state.step, self.state, self.firms, self.households)
+
     def run(self, steps=3):
         self.setup()
-        for _ in range(steps):
-            self.step()
-            time.sleep(1) # Чтобы не упереться в лимиты API
+        try:
+            for _ in range(steps):
+                self.step()
+                time.sleep(1)
+        finally:
+            self.logger.save()
+

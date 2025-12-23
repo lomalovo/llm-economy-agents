@@ -9,7 +9,7 @@ def main():
     llm = get_llm_backend(cfg)
     
     engine = SimulationEngine(llm, cfg)
-    engine.run(steps=3)
+    engine.run(steps=10)
 
 if __name__ == "__main__":
     main()
