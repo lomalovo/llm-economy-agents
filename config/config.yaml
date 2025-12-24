@@ -11,12 +11,32 @@ llm:
   timeout: 30
 
 agents:
-  households:
-    count: 5
+  # Группа 1: Богачи-Сберегатели
+  rich_savers:
+    type: "household"
+    count: 3
     params:
-      initial_money: 300.0
-  
-  firms:
+      initial_money: 1000.0
+      template: "household.j2"
+      persona: "Cautious Saver"
+      greed: 0.1
+      inflation_fear: 0.9
+
+  # Группа 2: Бедные-Транжиры
+  poor_spenders:
+    type: "household"
+    count: 3
+    params:
+      initial_money: 50.0
+      template: "household.j2"
+      persona: "Party Guy"
+      greed: 0.95
+      inflation_fear: 0.1
+
+  tech_giants:
+    type: "firm"
     count: 2
     params:
-      initial_capital: 2000.0
+      initial_capital: 5000.0
+      template: "firm.j2"
+      strategy: "aggressive"

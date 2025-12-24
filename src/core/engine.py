@@ -6,6 +6,8 @@ from src.agents.impl import HouseholdAgent, FirmAgent
 from src.economics.mechanism import MarketMechanism
 from src.llm.backend.base import BaseLLMBackend
 from src.core.logger import SimulationLogger
+from src.core.builder import AgentBuilder
+
 
 class SimulationEngine:
     def __init__(self, llm: BaseLLMBackend, config: dict):
@@ -21,26 +23,7 @@ class SimulationEngine:
         self.firms = []
 
     def setup(self):
-        agents_cfg = self.cfg.get("agents", {})
-        
-        # 1. Households
-        hh_cfg = agents_cfg.get("households", {"count": 2, "params": {}})
-        count = hh_cfg.get("count", 2)
-        params = hh_cfg.get("params", {"initial_money": 200})
-        
-        self.households = [
-            HouseholdAgent(f"h_{i+1}", self.llm, **params) 
-            for i in range(count)
-        ]
-
-        firm_cfg = agents_cfg.get("firms", {"count": 1, "params": {}})
-        count = firm_cfg.get("count", 1)
-        params = firm_cfg.get("params", {"initial_capital": 1000})
-        
-        self.firms = [
-            FirmAgent(f"f_{i+1}", self.llm, **params) 
-            for i in range(count)
-        ]
+        self.households, self.firms = AgentBuilder.build_from_config(self.llm, self.cfg)
         
         print(f"Setup complete: {len(self.households)} HHs, {len(self.firms)} Firms.")
 

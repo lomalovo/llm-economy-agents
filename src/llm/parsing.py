@@ -1,16 +1,16 @@
-import json
 import re
+from json_repair import repair_json
 
 def extract_json_from_text(text: str) -> str:
     """
-    Пытается найти JSON-блок внутри текста от LLM.
-    Убирает маркдаун обертки ```json ... ```.
+    Пытается найти и починить JSON внутри ответа LLM.
     """
-    text = text.strip()
-    
-    match = re.search(r"\{.*\}", text, re.DOTALL)
+    match = re.search(r"(\{.*\})", text, re.DOTALL)
     if match:
-        json_str = match.group(0)
-        return json_str
+        text = match.group(1)
     
-    return text
+    try:
+        fixed_json = repair_json(text, return_objects=False, skip_json_loads=True)
+        return fixed_json
+    except Exception:
+        return text

@@ -1,13 +1,14 @@
 from src.agents.base import BaseAgent
 from src.schemas.economics import HouseholdDecision, FirmDecision
-from src.llm.prompts import SYSTEM_PROMPT_ECON, HOUSEHOLD_PROMPT, FIRM_PROMPT
+from src.llm.prompts import SYSTEM_PROMPT_ECON
+from src.llm.prompt_manager import get_prompt_manager
 
 class HouseholdAgent(BaseAgent):
-    def __init__(self, agent_id, llm, initial_money=100.0):
+    def __init__(self, agent_id, llm, initial_money=100.0, template="household.j2", **custom_params):
         super().__init__(agent_id, llm)
         self.money = initial_money
-        
-        # Последнее решение (Pydantic объект)
+        self.template_name = template
+        self.attributes = custom_params
 
         self.labor_hired = 0.0 # Для фирм
 
@@ -19,11 +20,15 @@ class HouseholdAgent(BaseAgent):
         self.last_bought: float = 0.0   # Сколько товаров реально купил
 
     async def make_decision(self, market_data: dict) -> HouseholdDecision:
-        user_msg = HOUSEHOLD_PROMPT.format(
-            money=self.money,
-            wage=market_data.get("wage", 0),
-            price=market_data.get("price", 0)
-        )
+        context = {
+            "agent_id": self.id,
+            "money": self.money,
+            **market_data,
+            **self.attributes
+        }
+
+        prompter = get_prompt_manager()
+        user_msg = prompter.render(self.template_name, **context)
         
         # Если есть история прошлого хода, можно было бы добавить её в промпт сюда
         # Но пока оставляем базовый вариант
@@ -49,10 +54,12 @@ class HouseholdAgent(BaseAgent):
 
 
 class FirmAgent(BaseAgent):
-    def __init__(self, agent_id, llm, initial_capital=1000.0):
+    def __init__(self, agent_id, llm, initial_capital=1000.0, template="firm.j2", **custom_params):
         super().__init__(agent_id, llm)
         self.money = initial_capital
         self.inventory = 0.0
+        self.template_name = template
+        self.attributes = custom_params
         
         self.current_decision: FirmDecision = None
         
@@ -61,12 +68,17 @@ class FirmAgent(BaseAgent):
         self.goods_sold: float = 0.0   # Сколько товаров реально продали
 
     async def make_decision(self, market_data: dict) -> FirmDecision:
-        user_msg = FIRM_PROMPT.format(
-            money=self.money,
-            inventory=self.inventory,
-            wage=market_data.get("wage", 0),
-            last_demand=market_data.get("last_demand", "неизвестно")
-        )
+        context = {
+            "agent_id": self.id,
+            "money": self.money,
+            "inventory": self.inventory,
+            "wage": market_data.get("wage", 0),
+            "last_demand": market_data.get("last_demand", "неизвестно"),
+            **self.attributes 
+        }
+
+        prompter = get_prompt_manager()
+        user_msg = prompter.render(self.template_name, **context)
 
         decision = await self.llm.generate(
             system_prompt=SYSTEM_PROMPT_ECON,

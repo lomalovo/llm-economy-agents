@@ -51,9 +51,9 @@ class OpenAICompatibleBackend(BaseLLMBackend):
             json_structure = json.dumps(schema.model_json_schema(), indent=2)
             instr = (
                 f"\n\nOUTPUT FORMAT INSTRUCTION:\n"
-                f"You MUST respond with a valid JSON object matching this schema:\n"
-                f"{json_structure}\n"
-                f"Do NOT wrap the output in ```json ... ``` code blocks. Just raw JSON text."
+                f"1. You MUST respond with a valid JSON object matching this schema:\n{json_structure}\n"
+                f"2. Do NOT wrap in markdown blocks.\n"
+                f"3. IMPORTANT: No math expressions (e.g., '50*10'). Calculate values yourself and output ONLY numbers."
             )
             messages[0]["content"] += instr
 
