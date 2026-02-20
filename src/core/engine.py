@@ -27,14 +27,45 @@ class SimulationEngine:
         
         print(f"Setup complete: {len(self.households)} HHs, {len(self.firms)} Firms.")
 
+    def _process_events(self):
+        """Проверяет, есть ли события на текущем шаге"""
+        events = self.cfg.get("events", [])
+        current_step = self.state.step
+        
+        for event in events:
+            if event["step"] == current_step:
+                print(f"EVENT TRIGGERED: {event['description']}")
+                
+                if event["type"] == "cash_injection":
+                    amount = event["amount"]
+                    target_type = event["target"]
+                    
+                    targets = []
+                    if target_type == "household":
+                        targets = self.households
+                    elif target_type == "firm":
+                        targets = self.firms
+                        
+                    for agent in targets:
+                        agent.money += amount
+                    
+                    print(f"Раздали по {amount} всем {target_type}s!")
+
     async def step(self):
         self.state.step += 1
         print(f"\n--- STEP {self.state.step} START ---")
+
+        self._process_events()
+        
+        # Считаем общий спрос домохозяйств (сколько денег они готовы потратить)
+        total_demand_money = sum(h.current_decision.consumption_budget for h in self.households if h.current_decision) or 0
+        total_demand_qty = total_demand_money / self.state.avg_price if self.state.avg_price > 0 else 0
         
         market_info = {
             "wage": self.state.avg_wage,
             "price": self.state.avg_price,
-            "last_demand": 100 # TODO: Сделать динамическим
+            "last_demand": round(total_demand_qty, 1),  # Реальный спрос в штуках
+            "demand_pressure": "high" if total_demand_qty > 10 else "normal"  # Сигнал о давлении
         }
         
         # --- ФАЗА 1: ПАРАЛЛЕЛЬНОЕ МЫШЛЕНИЕ ---
@@ -65,6 +96,7 @@ class SimulationEngine:
 
         # --- ЛОГГИРОВАНИЕ ---
         self.logger.log_step(self.state.step, self.state, self.firms, self.households)
+        
 
     async def run(self, steps=3):
         self.setup()

@@ -11,7 +11,7 @@ async def async_main():
     
     engine = SimulationEngine(llm, cfg)
     
-    await engine.run(steps=5)
+    await engine.run(steps=15)
 
 def main():
     asyncio.run(async_main())

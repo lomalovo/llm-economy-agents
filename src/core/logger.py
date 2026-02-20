@@ -18,29 +18,24 @@ class SimulationLogger:
     def log_step(self, step, world_state, firms, households):
         """Собираем метрики со всего мира в одну строку"""
         
-        # Агрегированные данные
-        avg_price = world_state.avg_price
-        wage = world_state.avg_wage
-        unemployment = world_state.unemployment_rate
-        
-        # ВВП (сумма проданных товаров или произведенных)
-        total_production = sum(f.current_decision.production_target for f in firms)
-        total_sales = sum(f.goods_sold for f in firms)
-        
-        # Денежная масса (проверка, не исчезают ли деньги)
-        total_money = sum(f.money for f in firms) + sum(h.money for h in households)
-        
+        # 1. Агрегированные данные (Макро)
         row = {
             "step": step,
-            "avg_price": avg_price,
-            "wage": wage,
-            "unemployment_rate": unemployment,
-            "total_production": total_production,
-            "total_sales": total_sales,
-            "total_money_supply": total_money,
-            # Можно добавить данные по конкретной фирме, если их мало
-            "firm_0_price": firms[0].current_decision.price_setting if firms else 0
+            "avg_price": world_state.avg_price,
+            "wage": world_state.avg_wage,
+            "unemployment_rate": world_state.unemployment_rate,
+            "total_production": sum(f.current_decision.production_target for f in firms if f.current_decision),
+            "total_sales": sum(f.goods_sold for f in firms),
+            "total_money_supply": sum(f.money for f in firms) + sum(h.money for h in households),
         }
+
+        # 2. Данные по КАЖДОМУ агенту (Микро)
+        # Мы проходимся по списку агентов и сливаем их stats в общую строку
+        for agent in households + firms:
+            # agent.get_stats() возвращает словарь типа {"savers_1_money": 200, ...}
+            stats = agent.get_stats()
+            row.update(stats)
+
         self.data.append(row)
 
     def save(self):
@@ -49,6 +44,9 @@ class SimulationLogger:
             return
             
         df = pd.DataFrame(self.data)
+        cols = ["step"] + [c for c in df.columns if c != "step"]
+        df = df[cols]
+        
         df.to_csv(self.filename, index=False)
         print(f"Data saved to {self.filename}")
         return self.filename

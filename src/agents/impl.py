@@ -23,6 +23,8 @@ class HouseholdAgent(BaseAgent):
         context = {
             "agent_id": self.id,
             "money": self.money,
+            "wage": market_data.get("wage", 0),
+            "price": market_data.get("price", 0),
             **market_data,
             **self.attributes
         }
@@ -68,11 +70,14 @@ class FirmAgent(BaseAgent):
         self.goods_sold: float = 0.0   # Сколько товаров реально продали
 
     async def make_decision(self, market_data: dict) -> FirmDecision:
+        last_sales = getattr(self, 'goods_sold', 0.0)
+        
         context = {
             "agent_id": self.id,
             "money": self.money,
             "inventory": self.inventory,
             "wage": market_data.get("wage", 0),
+            "last_sales": last_sales,
             "last_demand": market_data.get("last_demand", "неизвестно"),
             **self.attributes 
         }

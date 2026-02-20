@@ -46,20 +46,18 @@ class MarketMechanism:
         """Сведение рынка товаров"""
         
         # 1. Производство (Упрощенно: Производственная функция Y = L * 1)
-        total_production = sum(f.labor_hired * 1.0 for f in firms)
+        # Сначала добавляем произведенное к инвентарю ПЕРЕД продажами
+        for f in firms:
+            production = f.labor_hired * 1.0
+            f.inventory += production
         
-        # Добавляем к запасам фирм
-        # Для простоты: размажем производство поровну (или пропорционально труду)
-        # Пока считаем, что у нас одна мега-фирма или рынок идеален
+        total_production = sum(f.labor_hired * 1.0 for f in firms)
         
         # 2. Спрос (Сколько денег люди принесли в магазин)
         total_money_supply = sum(h.current_decision.consumption_budget for h in households)
         
-        # 3. Сколько реально могут купить товара (Ограничено производством)
-        # Если товаров 100, а денег 1000, цена вырастет? Или дефицит?
-        # В ABM с фиксированной ценой будет дефицит.
-        
-        total_goods_available = total_production + sum(f.inventory for f in firms)
+        # 3. Сколько реально могут купить товара (Ограничено инвентарем)
+        total_goods_available = sum(f.inventory for f in firms)
         
         max_can_buy = total_money_supply / avg_price if avg_price > 0 else 0
         actual_sold_qty = min(total_goods_available, max_can_buy)
@@ -67,12 +65,15 @@ class MarketMechanism:
         # 4. Обмен
         # Фирмы получают деньги
         revenue = actual_sold_qty * avg_price
-        # Распределяем доход между фирмами пропорционально их вкладу (упрощение)
+        # Распределяем доход между фирмами пропорционально их инвентарю
         if total_goods_available > 0:
             for f in firms:
-                share = (f.inventory + f.labor_hired) / total_goods_available
+                share = f.inventory / total_goods_available
+                sold_here = actual_sold_qty * share
+                f.goods_sold = sold_here
+
                 f.money += revenue * share
-                f.inventory = (f.inventory + f.labor_hired) - (actual_sold_qty * share)
+                f.inventory -= sold_here  # Вычитаем только проданное
         
         # Люди получают товар и тратят деньги
         if max_can_buy > 0:
