@@ -1,31 +1,44 @@
+import random
 from typing import Type, Optional
 from pydantic import BaseModel
 from .base import BaseLLMBackend
 
+
 class DummyBackend(BaseLLMBackend):
     async def generate(
-        self, 
-        system_prompt: str, 
-        user_prompt: str, 
+        self,
+        system_prompt: str,
+        user_prompt: str,
         schema: Optional[Type[BaseModel]] = None
     ):
-        print(f"\n[DummyLLM Log]")
-        print(f"  System: {system_prompt}")
-        print(f"  User:   {user_prompt}")
-        
         if schema:
-            print(f"  Schema requested: {schema.__name__}")
-            # Возвращаем жестко прописанные заглушки для разных схем
-            # В будущем здесь можно генерировать рандомные данные библиотекой `polyfactory`
-            
-            # Если просим TestAgentDecision (из main.py)
-            if "TestAgentDecision" in schema.__name__:
+            name = schema.__name__
+
+            if name == "HouseholdDecision":
+                labor   = round(random.uniform(0.5, 0.95), 2)
+                budget  = round(random.uniform(10.0, 60.0), 2)
+                savings = round(random.uniform(5.0, 30.0), 2)
                 return schema(
-                    thoughts="Это тестовый прогон, я имитирую мышление.",
-                    action="WAIT",
-                    amount=100.50
+                    reasoning="Dummy: balancing current needs against saving for later.",
+                    labor_supply=labor,
+                    consumption_budget=budget,
+                    savings_amount=savings,
                 )
-            
-            return schema.model_construct()
-            
-        return "Dummy text response"
+
+            if name == "FirmDecision":
+                return schema(
+                    reasoning="Dummy: assessing demand and setting a competitive price.",
+                    labor_demand=round(random.uniform(1.0, 5.0), 2),
+                    price_setting=round(random.uniform(10.0, 25.0), 2),
+                    production_target=round(random.uniform(1.0, 8.0), 2),
+                )
+
+            # Fallback for unknown schemas
+            try:
+                fields = {k: 0.0 for k in schema.model_fields}
+                return schema(**fields)
+            except Exception:
+                return schema.model_construct()
+
+        # No schema → free text (reflection)
+        return "Dummy reflection: conditions are stable, maintaining current strategy."

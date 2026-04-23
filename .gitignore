@@ -1,25 +1,36 @@
-# Python кеш
+# Python cache
 __pycache__/
 *.py[cod]
 *.pyc
+
+# Experiment data (large, generated)
 data
 
-# Виртуальное окружение
+# Virtual environment
 venv/
 env/
 .venv/
 
-# Environment variables (API ключи)
+# Environment variables (API keys)
 .env
 .env.local
 
-# PyTorch модели
+# Model checkpoints
 *.pt
 *.pth
 *.ckpt
 models/
 checkpoints/
 
-# HuggingFace кеш
+# HuggingFace cache
 .cache/
 transformers_cache/
+
+# Local-only notes and IDE state
+.local/
+.vscode/
+.idea/
+
+# pytest / macOS
+.pytest_cache/
+*.DS_Store

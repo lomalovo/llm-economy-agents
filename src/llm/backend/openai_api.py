@@ -2,9 +2,11 @@ import os
 import json
 import asyncio
 import random
+import httpx
 from typing import Type, Optional
 from pydantic import BaseModel
-from openai import AsyncOpenAI, APITimeoutError, APIStatusError
+from openai import AsyncOpenAI, APITimeoutError, APIStatusError, APIConnectionError
+from pydantic import ValidationError
 from dotenv import load_dotenv
 
 from .base import BaseLLMBackend
@@ -14,22 +16,25 @@ load_dotenv()
 
 class OpenAICompatibleBackend(BaseLLMBackend):
     def __init__(
-        self, 
-        api_key_env_var: str, 
-        base_url: str = None, 
+        self,
+        api_key_env_var: str,
+        base_url: str = None,
         model_name: str = "gpt-3.5-turbo",
         max_concurrency: int = 5,
         max_retries: int = 3,
-        timeout: int = 60
+        timeout: int = 60,
+        verify_ssl: bool = True,
     ):
         api_key = os.getenv(api_key_env_var)
         if not api_key:
             raise ValueError(f"API Key env var '{api_key_env_var}' is missing/empty!")
 
+        http_client = httpx.AsyncClient(verify=verify_ssl)
         self.client = AsyncOpenAI(
             api_key=api_key,
             base_url=base_url,
-            timeout=timeout
+            timeout=timeout,
+            http_client=http_client,
         )
         self.model_name = model_name
         self.max_retries = max_retries
@@ -76,18 +81,17 @@ class OpenAICompatibleBackend(BaseLLMBackend):
                 
                 return content
 
-            except (APITimeoutError, APIStatusError) as e:
+            except (APITimeoutError, APIStatusError, APIConnectionError, ValidationError) as e:
                 last_exception = e
                 if attempt == self.max_retries:
                     print(f"[LLM Error] Final attempt failed: {e}")
                     raise e
-                
-                # Exponential Backoff + Jitter
-                # Ждем: 1с, 2с, 4с... + случайная добавка (чтобы все агенты не ломанулись разом снова)
+
+                # Exponential backoff + jitter
                 sleep_time = (2 ** attempt) + random.uniform(0, 1)
-                print(f"[LLM Warning] Request failed ({e}). Retrying in {sleep_time:.2f}s...")
+                print(f"[LLM Warning] Request failed ({type(e).__name__}). Retrying in {sleep_time:.2f}s...")
                 await asyncio.sleep(sleep_time)
-                
+
             except Exception as e:
                 print(f"[Code Error] Unexpected error: {e}")
                 raise e

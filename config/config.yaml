@@ -1,6 +1,56 @@
 experiment:
-  name: "async_test_run"
-  description: "Testing parallel execution"
+  name: "helicopter_money_experiment"
+  description: "Helicopter money shock analysis"
+
+market:
+  # Goods market clearing mechanism:
+  #   average  — all firms trade at a single average price; revenue split by inventory share
+  #   queue    — buyers visit firms in random order, cheapest first
+  #   weighted — demand routed to firms inversely proportional to price
+  goods_clearing_mode: "average"
+
+  # φ (phi) — how fast wage adjusts to labor market imbalance.
+  # Range: 0.05 (sluggish) ... 0.30 (fast-reacting)
+  wage_adjustment_speed: 0.15
+  # Hard caps: wage cannot rise more than 10% or fall more than 5% per period
+  wage_max_increase: 0.10
+  wage_max_decrease: 0.05
+
+simulation:
+  # How many past periods each agent sees in their prompt
+  history_window: 5
+  # How often reflection runs (every N steps)
+  reflection_every: 3
+  # How many past reflections to keep (sliding window)
+  reflection_window: 3
+
+central_bank:
+  enabled: true
+  neutral_rate: 0.05
+  target_inflation: 0.02
+  target_unemployment: 0.05
+  # Taylor rule coefficients
+  inflation_sensitivity: 1.5
+  unemployment_sensitivity: 0.5
+  min_rate: 0.0
+  max_rate: 0.25
+
+government:
+  enabled: true
+  # Progressive income tax brackets.
+  # threshold — lower bound of bracket (0 = from first unit of income).
+  # rate — marginal rate on income within this bracket.
+  # Example: income=30, brackets [(0, 0.10), (20, 0.20), (50, 0.35)]:
+  #   first 20  → 20 × 0.10 = 2.0
+  #   next 10   → 10 × 0.20 = 2.0
+  #   total tax: 4.0  (effective rate ~13%)
+  tax_brackets:
+    - threshold: 0
+      rate: 0.10
+    - threshold: 20
+      rate: 0.20
+    - threshold: 50
+      rate: 0.35
 
 llm:
   backend_type: "deepseek"
@@ -10,33 +60,79 @@ llm:
   max_retries: 3
   timeout: 30
 
+events:
+  - step: 5
+    type: "cash_injection"
+    target: "household"
+    amount: 100.0
+    description: "Helicopter Money Drop"
+
 agents:
-  # Группа 1: Богачи-Сберегатели
-  rich_savers:
+  cautious_households:
     type: "household"
-    count: 3
+    count: 5
     params:
-      initial_money: 1000.0
+      initial_money: 200.0
       template: "household.j2"
-      persona: "Cautious Saver"
-      greed: 0.1
-      inflation_fear: 0.9
+      bio: >
+        Anna is 43 years old, a public school teacher in a mid-sized city.
+        She has two teenage children — a daughter finishing high school and
+        a son in his first year of college. She and her husband separated
+        three years ago; she manages the household on her own. She owns a
+        small apartment with a mortgage she has been paying down for eleven
+        years. Anna is methodical and careful by temperament — she
+        double-checks things, keeps lists, and dislikes surprises. She
+        grew up in a family that went through a difficult period in the
+        1990s and watched her parents struggle. Outside work she reads
+        detective novels and tends a small vegetable garden on the balcony.
 
-  # Группа 2: Бедные-Транжиры
-  poor_spenders:
+  free_spending_households:
     type: "household"
-    count: 3
+    count: 5
     params:
-      initial_money: 50.0
+      initial_money: 200.0
       template: "household.j2"
-      persona: "Party Guy"
-      greed: 0.95
-      inflation_fear: 0.1
+      bio: >
+        Alex is 27, a software developer at a tech startup building mobile
+        apps. He grew up in a provincial town, moved to the capital for
+        university, and stayed. He rents a one-bedroom apartment in a lively
+        neighborhood, lives alone, and has no serious commitments outside
+        work. He is sociable, slightly impulsive, and energized by novelty.
+        He enjoys good food, live music, and occasional travel. He changes
+        jobs every two to three years when something more interesting comes
+        along. He has never thought much about the long term — the present
+        always seems more concrete.
 
-  tech_giants:
+  lean_firms:
     type: "firm"
     count: 2
     params:
-      initial_capital: 5000.0
+      initial_capital: 1000.0
       template: "firm.j2"
-      strategy: "aggressive"
+      bio: >
+        A mid-sized manufacturing operation founded twenty years ago by two
+        brothers, now run by the younger one after the elder retired. The
+        company makes standardized components for construction and industrial
+        clients. The workforce is stable; many employees have been there over
+        a decade. Management style is blunt and operational — the owner reads
+        the weekly numbers closely, walks the factory floor daily, and
+        mistrusts consultants. The company has survived two recessions and
+        prizes its reputation for consistent delivery. It competes mainly on
+        availability and price.
+
+  premium_firms:
+    type: "firm"
+    count: 1
+    params:
+      initial_capital: 1000.0
+      template: "firm.j2"
+      bio: >
+        A specialized manufacturing company that grew out of a university
+        spin-off twelve years ago. The founding team included an engineer
+        and a product designer; that combination still shows in what they
+        make. Clients come from precision industries — medical equipment,
+        aerospace sub-assembly, custom instrumentation. The company is
+        smaller than its main competitors but has very low defect rates and
+        strong repeat business. The CEO is detail-oriented, slow to hire
+        but loyal to staff, and highly attentive to customer feedback. She
+        has turned down acquisition offers twice.

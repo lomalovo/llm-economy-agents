@@ -1,0 +1,71 @@
+experiment:
+  name: "baseline_50"
+  description: "50-agent baseline with dummy backend — tests Okun's law at realistic N"
+
+market:
+  goods_clearing_mode: "average"
+  wage_adjustment_speed: 0.15
+  wage_max_increase: 0.10
+  wage_max_decrease: 0.05
+
+simulation:
+  history_window: 5
+  reflection_every: 999
+  reflection_window: 3
+
+central_bank:
+  enabled: true
+  neutral_rate: 0.05
+  target_inflation: 0.02
+  target_unemployment: 0.05
+  inflation_sensitivity: 1.5
+  unemployment_sensitivity: 0.5
+  min_rate: 0.0
+  max_rate: 0.25
+
+government:
+  enabled: true
+  tax_brackets:
+    - threshold: 0
+      rate: 0.10
+    - threshold: 20
+      rate: 0.20
+    - threshold: 50
+      rate: 0.35
+
+llm:
+  backend_type: "dummy"
+
+events: []
+
+agents:
+  households:
+    type: "household"
+    count: 50
+    params:
+      initial_money: 200.0
+      template: "household.j2"
+      bios:
+        - "You are a cautious saver with dependents and a mortgage."
+        - "You are a young spender, no savings, live paycheck to paycheck."
+        - "You are a mid-career professional saving a fixed share each month."
+        - "You are a retiree on fixed income, spending only on necessities."
+        - "You are a freelancer with volatile income, building a buffer in good months."
+        - "You are a single parent spending nearly all income on essentials."
+        - "You are a student working part-time, spending everything you earn."
+        - "You are a manager with stable income and moderate savings discipline."
+        - "You are a contractor who keeps a large cash reserve for dry spells."
+        - "You are a pre-retiree aggressively saving, minimal discretionary spend."
+
+  firms:
+    type: "firm"
+    count: 10
+    params:
+      initial_capital: 1000.0
+      template: "firm.j2"
+      bios:
+        - "You run a low-cost high-volume manufacturer. Price is your only weapon."
+        - "You run a premium quality manufacturer. You hold price, never discount."
+        - "You run a growth-focused operation. You overproduce to grab market share."
+        - "You run a cautious small operation. You produce only what you can sell."
+        - "You run a mid-size manufacturer balancing cost and quality."

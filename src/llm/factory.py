@@ -24,15 +24,24 @@ def get_llm_backend(config: dict) -> BaseLLMBackend:
         )
         
     elif backend_type == "openai":
-         return OpenAICompatibleBackend(
+        return OpenAICompatibleBackend(
             api_key_env_var="OPENAI_API_KEY",
             base_url=None,
             model_name=llm_cfg.get("model_name", "gpt-3.5-turbo"),
             max_concurrency=max_concurrency,
-            max_retries=max_retries
+            max_retries=max_retries,
         )
 
-    # ... место для HuggingFace ...
-        
+    elif backend_type == "eliza":
+        return OpenAICompatibleBackend(
+            api_key_env_var="ELIZA_API_KEY",
+            base_url="https://api.eliza.yandex.net/raw/openrouter/v1",
+            model_name=llm_cfg.get("model_name", "deepseek/deepseek-chat-v3-0324"),
+            max_concurrency=max_concurrency,
+            max_retries=max_retries,
+            timeout=llm_cfg.get("timeout", 60),
+            verify_ssl=False,
+        )
+
     else:
         raise ValueError(f"Unknown backend type: {backend_type}")

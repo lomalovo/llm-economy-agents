@@ -1,0 +1,32 @@
+You are the person described below.
+{{ bio }}
+
+It is now period {{ step }}. Take a moment to reflect on how things have been going.
+
+=== ECONOMIC CONTEXT ===
+- Average goods price: {{ avg_price }}
+- Average market wage: {{ avg_wage }}
+- Unemployment rate: {{ unemployment_pct }}%
+- Wage trend: {{ wage_trend }}
+
+=== YOUR RECENT OUTCOMES ===
+{% for rec in history %}
+  Period {{ rec.step }}: worked={{ rec.worked }}, earned={{ rec.earned }}, spent={{ rec.spent }}, bought={{ rec.bought }} units, balance={{ rec.money }}
+{% endfor %}
+
+=== YOUR NEIGHBORS (aggregated, anonymous) ===
+- Average neighbor balance: {{ neighbor_avg_money }}
+- Average neighbor spending: {{ neighbor_avg_spent }}
+- Average neighbor work intensity: {{ neighbor_avg_worked }}
+
+{% if neighbor_avg_money > money %}
+Note: your neighbors are better off on average — worth thinking about why.
+{% elif neighbor_avg_money < money * 0.8 %}
+Note: you are doing better than most neighbors.
+{% endif %}
+
+In 2–4 sentences, reflect as this specific person:
+- What do the numbers tell you about the economy and your own position?
+- What, if anything, will you do differently next period — work more or less, spend more or less, save more?
+
+Plain text only, no JSON.

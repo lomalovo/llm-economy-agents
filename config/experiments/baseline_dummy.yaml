@@ -1,0 +1,74 @@
+experiment:
+  name: "baseline_dummy"
+  description: "Baseline with random (dummy) agents — ablation control for LLM contribution"
+
+market:
+  goods_clearing_mode: "average"
+  wage_adjustment_speed: 0.15
+  wage_max_increase: 0.10
+  wage_max_decrease: 0.05
+
+simulation:
+  history_window: 5
+  reflection_every: 999  # disable reflections for dummy (no-op anyway)
+  reflection_window: 3
+
+central_bank:
+  enabled: true
+  neutral_rate: 0.05
+  target_inflation: 0.02
+  target_unemployment: 0.05
+  inflation_sensitivity: 1.5
+  unemployment_sensitivity: 0.5
+  min_rate: 0.0
+  max_rate: 0.25
+
+government:
+  enabled: true
+  tax_brackets:
+    - threshold: 0
+      rate: 0.10
+    - threshold: 20
+      rate: 0.20
+    - threshold: 50
+      rate: 0.35
+
+llm:
+  backend_type: "dummy"
+  model_name: "dummy"
+  temperature: 0.0
+  max_concurrency: 50
+  max_retries: 1
+  timeout: 10
+
+events: []
+
+agents:
+  households:
+    type: "household"
+    count: 10
+    params:
+      initial_money: 200.0
+      template: "household.j2"
+      bios:
+        - "You are Artem, 20, working part-time shifts at a warehouse. You spend whatever you earn."
+        - "You are Maria, 34, a nurse raising a child alone. Budget is very tight, you spend what comes in."
+        - "You are Igor, 47, a day laborer with no savings. You spend carefully but have no reserves."
+        - "You are Sofia, 26, an analyst. You save a fixed slice each month and spend the rest freely."
+        - "You are Oleg, 44, a logistics manager. You put a fixed portion aside and spend the rest on family."
+        - "You are Lena, 32, a freelance designer with lumpy income. You keep a cushion for dry spells."
+        - "You are Pavel, 51, a teacher. Modest salary, saves small amount monthly out of habit."
+        - "You are Dmitri, 49, a self-employed contractor who keeps large cash reserves for emergencies."
+        - "You are Anna, 42, a teacher with a mortgage. She checks balance regularly and cuts spending when low."
+        - "You are Natasha, 61, an accountant near retirement. Spend as little as possible, save as much as possible."
+
+  firms:
+    type: "firm"
+    count: 3
+    params:
+      initial_capital: 1000.0
+      template: "firm.j2"
+      bios:
+        - "No-frills manufacturer competing on price. Produce what you expect to sell."
+        - "Quality-focused manufacturer with reliable products at a premium price."
+        - "Growth-oriented mid-size firm willing to accept tight margins to gain market share."

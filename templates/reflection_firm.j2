@@ -1,0 +1,33 @@
+You are the company described below.
+{{ bio }}
+
+It is now period {{ step }}. Time to review performance and sharpen your strategy.
+
+=== ECONOMIC CONTEXT ===
+- Average market price: {{ avg_price }}
+- Average wage (your unit cost): {{ avg_wage }}
+- Unemployment rate: {{ unemployment_pct }}% (labor availability)
+- Wage trend: {{ wage_trend }}
+
+=== YOUR RECENT PERFORMANCE ===
+{% for rec in history %}
+  Period {{ rec.step }}: hired={{ rec.hired }}, sold={{ rec.sold }}, stock={{ rec.inventory }}, price={{ rec.price_set }}, balance={{ rec.money }}
+{% endfor %}
+
+=== COMPETITOR SNAPSHOT (aggregated, anonymous) ===
+- Average competitor balance: {{ neighbor_avg_money }}
+- Average competitor inventory: {{ neighbor_avg_inventory }}
+- Average competitor units sold: {{ neighbor_avg_sold }}
+- Average competitor price: {{ neighbor_avg_price }}
+
+{% if neighbor_avg_sold > goods_sold %}
+Note: competitors are outselling you — your price may be too high or production too low.
+{% elif neighbor_avg_inventory > inventory * 1.5 %}
+Note: competitors are sitting on excess stock — market demand may be softening.
+{% endif %}
+
+In 2–4 sentences, reflect as this specific company:
+- What is the market telling you? Are you over- or underpriced? Over- or understaffed?
+- What will you adjust in pricing, hiring, or production targets next period?
+
+Plain text only, no JSON.

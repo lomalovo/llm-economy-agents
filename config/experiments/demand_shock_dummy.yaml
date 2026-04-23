@@ -1,0 +1,82 @@
+experiment:
+  name: "demand_shock_dummy"
+  description: "Demand shock with random (dummy) agents — ablation control for LLM contribution"
+
+market:
+  goods_clearing_mode: "average"
+  wage_adjustment_speed: 0.15
+  wage_max_increase: 0.10
+  wage_max_decrease: 0.05
+
+simulation:
+  history_window: 5
+  reflection_every: 999
+  reflection_window: 3
+
+central_bank:
+  enabled: true
+  neutral_rate: 0.05
+  target_inflation: 0.02
+  target_unemployment: 0.05
+  inflation_sensitivity: 1.5
+  unemployment_sensitivity: 0.5
+  min_rate: 0.0
+  max_rate: 0.25
+
+government:
+  enabled: true
+  tax_brackets:
+    - threshold: 0
+      rate: 0.10
+    - threshold: 20
+      rate: 0.20
+    - threshold: 50
+      rate: 0.35
+
+llm:
+  backend_type: "dummy"
+  model_name: "dummy"
+  temperature: 0.0
+  max_concurrency: 50
+  max_retries: 1
+  timeout: 10
+
+events:
+  - step: 10
+    type: "cash_injection"
+    target: "household"
+    amount: 100.0
+    description: "Helicopter Money Drop — demand shock (dummy agents)"
+
+agents:
+  cautious_households:
+    type: "household"
+    count: 5
+    params:
+      initial_money: 200.0
+      template: "household.j2"
+      bio: "Dummy cautious household agent."
+
+  free_spending_households:
+    type: "household"
+    count: 5
+    params:
+      initial_money: 200.0
+      template: "household.j2"
+      bio: "Dummy free-spending household agent."
+
+  lean_firms:
+    type: "firm"
+    count: 2
+    params:
+      initial_capital: 1000.0
+      template: "firm.j2"
+      bio: "Dummy lean firm agent."
+
+  premium_firms:
+    type: "firm"
+    count: 1
+    params:
+      initial_capital: 1000.0
+      template: "firm.j2"
+      bio: "Dummy premium firm agent."
