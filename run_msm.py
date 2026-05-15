@@ -123,20 +123,25 @@ async def run_lhs_grid(
     target: dict,
     out_dir: Path,
     resume: bool = True,
+    seed: int = 42,
+    label_prefix: str = "lhs",
 ) -> list[dict]:
+    """Run an LHS grid. ``label_prefix`` lets you append parallel batches
+    (e.g. ``lhs2`` with seed=43 to densify an existing 10-point grid).
+    """
     checkpoint = out_dir / "lhs_results.jsonl"
-    thetas = latin_hypercube(n_points, bounds, seed=42)
+    thetas = latin_hypercube(n_points, bounds, seed=seed)
 
     existing = _load_checkpoint(checkpoint) if resume else []
     done_labels = {r["label"] for r in existing}
 
     results = list(existing)
     for i, theta in enumerate(thetas):
-        label = f"lhs_{i:03d}"
+        label = f"{label_prefix}_{i:03d}"
         if label in done_labels:
             print(f"  [{label}] already computed, skipping")
             continue
-        print(f"\n=== LHS {i + 1}/{n_points}  θ = {theta} ===")
+        print(f"\n=== {label_prefix.upper()} {i + 1}/{n_points}  θ = {theta} ===")
         try:
             rec = await evaluate_theta(theta, base_cfg, steps, households, target, label)
             results.append(rec)
@@ -219,6 +224,7 @@ async def main_async(args: argparse.Namespace):
     lhs_results = await run_lhs_grid(
         base_cfg, args.lhs, args.steps, args.households,
         DEFAULT_BOUNDS, target, out_dir, resume=True,
+        seed=args.seed, label_prefix=args.label_prefix,
     )
     df_lhs = summarize(lhs_results, out_dir, tag="lhs_summary")
 
@@ -245,6 +251,8 @@ def main():
     p.add_argument("--out", default="data/msm")
     p.add_argument("--refine", default=None, help="Path to state.json to refine its best θ")
     p.add_argument("--refine-runs", type=int, default=3)
+    p.add_argument("--seed", type=int, default=42, help="LHS seed; vary to add new points to an existing run")
+    p.add_argument("--label-prefix", default="lhs", help="Prefix for LHS labels; vary to avoid collision when extending")
     args = p.parse_args()
     asyncio.run(main_async(args))
 

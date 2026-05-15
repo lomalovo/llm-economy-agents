@@ -58,13 +58,34 @@ async def main_async(args):
 
     progress_path = out_dir / "progress.jsonl"
 
-    for scenario, cfg_path in SCENARIOS.items():
-        print(f"\n=== {scenario} x {args.runs} runs (θ*) ===")
-        for i in range(args.runs):
+    # Restrict to a single scenario if requested (lets us run baseline/shock separately)
+    selected = (
+        {args.only_scenario: SCENARIOS[args.only_scenario]}
+        if args.only_scenario else SCENARIOS
+    )
+
+    for scenario, cfg_path in selected.items():
+        # Resume-aware: skip existing CSVs
+        existing = sorted(out_dir.glob(f"{scenario}_run_*.csv"))
+        have_ids = set()
+        for p in existing:
+            try:
+                have_ids.add(int(p.stem.split("_")[-1]))
+            except Exception:
+                pass
+        missing = [i for i in range(args.runs) if i not in have_ids]
+        if not missing:
+            print(f"\n=== {scenario}: all {args.runs} runs already exist, skipping ===")
+            continue
+
+        print(f"\n=== {scenario} x {len(missing)} missing runs (θ*) ===")
+        for i in missing:
             cfg = load_config(cfg_path)
             cfg = deep_merge(cfg, patch)
             if args.households:
                 cfg = override_household_count(cfg, args.households)
+            if args.goods_mode:
+                cfg.setdefault("market", {})["goods_clearing_mode"] = args.goods_mode
             cfg["experiment"] = {**cfg.get("experiment", {}), "name": f"hero_{scenario}_{i}"}
 
             try:
@@ -93,6 +114,10 @@ def main():
     p.add_argument("--steps", type=int, default=80)
     p.add_argument("--households", type=int, default=50)
     p.add_argument("--out", default="data/hero")
+    p.add_argument("--goods-mode", choices=["average", "queue", "weighted"], default=None,
+                   help="Override goods_clearing_mode (default: keep what's in scenario config)")
+    p.add_argument("--only-scenario", choices=["baseline", "demand_shock", "productivity_shock"],
+                   default=None, help="Run only one scenario (otherwise all three)")
     args = p.parse_args()
     asyncio.run(main_async(args))
 

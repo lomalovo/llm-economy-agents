@@ -6,7 +6,7 @@ initial_state:
   prev_avg_price: 15.0
   avg_wage: 15.0
 market:
-  goods_clearing_mode: average
+  goods_clearing_mode: weighted
   wage_adjustment_speed: 0.15
   wage_max_increase: 0.1
   wage_max_decrease: 0.05
@@ -15,7 +15,7 @@ market:
   separation_rate: 0.05
   price_adjustment_speed: 0.4
 simulation:
-  history_window: 5
+  history_window: 10
   reflection_every: 1000
   reflection_window: 3
 central_bank:
