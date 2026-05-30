@@ -24,6 +24,7 @@ class OpenAICompatibleBackend(BaseLLMBackend):
         max_retries: int = 3,
         timeout: int = 60,
         verify_ssl: bool = True,
+        extra_body: dict = None,
     ):
         api_key = os.getenv(api_key_env_var)
         if not api_key:
@@ -38,7 +39,7 @@ class OpenAICompatibleBackend(BaseLLMBackend):
         )
         self.model_name = model_name
         self.max_retries = max_retries
-        
+        self.extra_body = extra_body or {}
         self.semaphore = asyncio.Semaphore(max_concurrency)
 
     async def generate(
@@ -70,7 +71,8 @@ class OpenAICompatibleBackend(BaseLLMBackend):
                     response = await self.client.chat.completions.create(
                         model=self.model_name,
                         messages=messages,
-                        temperature=0.7
+                        temperature=0.7,
+                        extra_body=self.extra_body or None,
                     )
                 
                 content = response.choices[0].message.content

@@ -129,7 +129,7 @@ def main():
     p.add_argument("--max-per-source", type=int, default=100)
     p.add_argument("--max-total", type=int, default=2000)
     p.add_argument("--batch-size", type=int, default=20)
-    p.add_argument("--backend", default="eliza")
+    p.add_argument("--backend", default="deepseek")
     p.add_argument("--out", default="data/audit/judgments.jsonl")
     args = p.parse_args()
     asyncio.run(main_async(args))

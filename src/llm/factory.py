@@ -14,13 +14,15 @@ def get_llm_backend(config: dict) -> BaseLLMBackend:
         return DummyBackend()
     
     elif backend_type == "deepseek":
+        extra = {"thinking": {"type": "disabled"}} if llm_cfg.get("disable_thinking", True) else {}
         return OpenAICompatibleBackend(
             api_key_env_var="DEEPSEEK_API_KEY",
             base_url="https://api.deepseek.com",
-            model_name=llm_cfg.get("model_name", "deepseek-chat"),
-            # Прокидываем лимиты
+            model_name=llm_cfg.get("model_name", "deepseek-v4-flash"),
             max_concurrency=max_concurrency,
-            max_retries=max_retries
+            max_retries=max_retries,
+            timeout=llm_cfg.get("timeout", 90),
+            extra_body=extra,
         )
         
     elif backend_type == "openai":
@@ -32,15 +34,14 @@ def get_llm_backend(config: dict) -> BaseLLMBackend:
             max_retries=max_retries,
         )
 
-    elif backend_type == "eliza":
+    elif backend_type == "together":
         return OpenAICompatibleBackend(
-            api_key_env_var="ELIZA_API_KEY",
-            base_url="https://api.eliza.yandex.net/raw/openrouter/v1",
-            model_name=llm_cfg.get("model_name", "deepseek/deepseek-chat-v3-0324"),
+            api_key_env_var="TOGETHER_API_KEY",
+            base_url="https://api.together.xyz/v1",
+            model_name=llm_cfg.get("model_name", "meta-llama/Llama-3.3-70B-Instruct-Turbo"),
             max_concurrency=max_concurrency,
             max_retries=max_retries,
-            timeout=llm_cfg.get("timeout", 60),
-            verify_ssl=False,
+            timeout=llm_cfg.get("timeout", 90),
         )
 
     else:

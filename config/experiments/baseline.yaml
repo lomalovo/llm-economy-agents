@@ -37,8 +37,8 @@ government:
   - threshold: 50
     rate: 0.35
 llm:
-  backend_type: eliza
-  model_name: deepseek/deepseek-chat-v3-0324
+  backend_type: deepseek
+  model_name: deepseek-v3-0324
   temperature: 0.7
   max_concurrency: 30
   max_retries: 6

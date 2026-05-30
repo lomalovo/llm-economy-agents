@@ -86,6 +86,12 @@ async def main_async(args):
                 cfg = override_household_count(cfg, args.households)
             if args.goods_mode:
                 cfg.setdefault("market", {})["goods_clearing_mode"] = args.goods_mode
+            if args.llm_backend:
+                cfg.setdefault("llm", {})["backend_type"] = args.llm_backend
+            if args.llm_model:
+                cfg.setdefault("llm", {})["model_name"] = args.llm_model
+            if args.llm_no_thinking:
+                cfg.setdefault("llm", {})["disable_thinking"] = True
             cfg["experiment"] = {**cfg.get("experiment", {}), "name": f"hero_{scenario}_{i}"}
 
             try:
@@ -118,6 +124,12 @@ def main():
                    help="Override goods_clearing_mode (default: keep what's in scenario config)")
     p.add_argument("--only-scenario", choices=["baseline", "demand_shock", "productivity_shock"],
                    default=None, help="Run only one scenario (otherwise all three)")
+    p.add_argument("--llm-backend", default=None,
+                   help="Override LLM backend (e.g. 'deepseek', 'together')")
+    p.add_argument("--llm-model", default=None,
+                   help="Override LLM model name")
+    p.add_argument("--llm-no-thinking", action="store_true",
+                   help="Disable reasoning/thinking for DeepSeek V4 models")
     args = p.parse_args()
     asyncio.run(main_async(args))
 

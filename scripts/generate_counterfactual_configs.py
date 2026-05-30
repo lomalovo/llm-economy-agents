@@ -100,8 +100,8 @@ def build_base_cfg(experiment_name: str, hh_bios: list[str], firm_bios: list[str
             ],
         },
         "llm": {
-            "backend_type": "eliza",
-            "model_name": "deepseek/deepseek-chat-v3-0324",
+            "backend_type": "deepseek",
+            "model_name": "deepseek-v3-0324",
             "temperature": 0.7,
             "max_concurrency": 30,
             "max_retries": 3,

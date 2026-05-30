@@ -1,0 +1,1082 @@
+\documentclass[12pt, a4paper]{article}
+\usepackage{amsthm}
+\usepackage{amsmath}
+\usepackage{amssymb}
+\usepackage{amsfonts}
+\usepackage{algorithm}
+\usepackage{algpseudocode}
+\usepackage{graphicx}
+\usepackage{verbatim}
+\usepackage{hyperref}
+\usepackage{listings}
+\usepackage{xcolor}
+\usepackage{url}
+\usepackage[utf8]{inputenc}
+\usepackage[english,russian]{babel}
+\usepackage{tabularx}
+\usepackage{subcaption}
+\usepackage{geometry} 
+
+\usepackage{booktabs}  % для красивых таблиц
+\usepackage{caption}   % для настройки подписей
+
+% \newtheorem{theorem}{Theorem}
+% \theoremstyle{definition}
+% \newtheorem{definition}{Definition}
+
+%New colors defined below
+\definecolor{codegreen}{rgb}{0,0.6,0}
+\definecolor{codegray}{rgb}{0.5,0.5,0.5}
+\definecolor{codepurple}{rgb}{0.58,0,0.82}
+\definecolor{backcolour}{rgb}{0.95,0.95,0.92}
+
+%Code listing style named "mystyle"
+\lstdefinestyle{mystyle}{
+  % backgroundcolor=\color{backcolour},
+  commentstyle=\color{codegreen},
+  keywordstyle=\color{magenta},
+  numberstyle=\tiny\color{codegray},
+  stringstyle=\color{codepurple},
+  basicstyle=\ttfamily\footnotesize,
+%  basicstyle=\ttfamily\small,
+  breakatwhitespace=false,         
+  breaklines=true,                 
+  captionpos=b,                    
+  keepspaces=true,                 
+  numbers=left,                    
+  numbersep=5pt,                  
+  showspaces=false,                
+  showstringspaces=false,
+  showtabs=false,                  
+  tabsize=2,
+  columns=fullflexible % space between letters
+}
+
+%"mystyle" code listing set
+\lstset{style=mystyle}
+\lstset{basicstyle=\ttfamily} 
+\AddToHook{env/lstlisting/begin}{\lstset{basicstyle=\ttfamily\normalsize }}
+
+\newtheorem{theorem}{Теорема}
+\newtheorem{lemma}{Лемма}
+\newtheorem{statement}{Утверждение}
+\newtheorem{definition}{Определение}%[section]
+
+
+\title{Об обратимых структурах данных}
+\author{Андрей Ратьков}
+
+\begin{document}
+
+\thispagestyle{empty}
+\begin{center}
+ФЕДЕРАЛЬНОЕ ГОСУДАРСТВЕННОЕ БЮДЖЕТНОЕ\\
+ОБРАЗОВАТЕЛЬНОЕ УЧРЕЖДЕНИЕ ВЫСШЕГО ОБРАЗОВАНИЯ\\
+``САНКТ-ПЕТЕРБУРГСКИЙ ГОСУДАРСТВЕННЫЙ УНИВЕРСИТЕТ''\\
+(СПбГУ)\\
+\vfil
+Образовательная программа бакалавриата <<Науки о данных>>
+\vfil\vfil
+\includegraphics[width=0.35\textwidth]{images/spbu_logo}
+\vfil\vfil
+\textbf{\large Дипломная работа}\\
+\textbf{\large <<Об обратимых структурах данных>>}
+\end{center}
+
+\vfil\vfil
+\halign to \textwidth
+{#\hfil\tabskip=0pt plus1fill &#\hfil\tabskip=0pt\cr
+&
+Выполнил студент 4 курса бакалавриата\cr
+&
+группа 22.Б05-мкн\cr
+&
+Андрей Игоревич Ратьков\cr
+\noalign{\vfil}
+&
+Научный руководитель:\cr
+&
+Профессор, Александр Сергеевич Охотин\cr}
+
+\vfil\vfil
+\begin{center}
+Санкт-Петербург\\
+2026
+\end{center}
+\eject
+
+
+
+
+\tableofcontents
+\newpage
+
+\sloppy
+
+\section{Введение}
+В современном мире все программы и устройства, на которых они запускаются обладают важным свойством ~--- \textit{детерминизмом}: состояние вычисления на следующем шаге однозначно задаётся состоянием на предыдущем шаге.
+
+Вычисление называется \textit{обратимым}, если также по состоянию на следующем шаге можно однозначно восстановить состояние на предыдущем.
+
+Современные компьютеры основаны на необратимых операциях: логические элементы, из которых они состоят, постоянно внутри себя что-то необратимо стирают, что влечёт выделение тепла ~--- это объясняется принципом Ландауэра \cite{landauer1961irreversibility} в квантовой механике. 
+
+Теоретически обратимые вычисления возможны без выделения тепла. Поэтому разработка обратимых логических элементов, не выделяющих тепло, является открытой задачей в области физики, а разработка обратимых алгоритмов, которые можно было бы запускать на таких элементах, открывает новые направления исследований в теоретической информатике.
+
+Теория обратимых алгоритмов развивается как направление в теоретической информатике. Существуют и поддерживаются обратимые языки программирования (интерпретируемый язык программирования Janus \cite{yokoyama2007reversible}, языки для обратимого функционального программирования R-CORE и R-WHILE (\cite{gluck2016linear}, \cite{gluck2017minimalist}, \cite{gluck2018categorical})). Возможности обратимых вычислений для выполнения стандартных задач работы с динамической памятью, различными структурами данных и алгоритмами, сейчас активно исследуются. Подробный обзор энергоэффективности различных алгоритмов был выполнен Эриком Демейном и др. \cite{demaine2016energy} в 2016 году. Демейн также разработал первую обратимую динамическую память с  одинаковым размером аллоцируемых блоков. Червенка и Глюк в своём дальнейшем исследовании обратимой динамической памяти \cite{cservenka2018data} разработали такую, которая может работать с блоками разных размеров, но с сильной фрагментацией. Также Глюк и Йокогама занимались обратимыми алгоритмами сравнения строк \cite{gluck2022reversible}, а Чао Пенг и др. проводили исследования обратимых алгоритмов поиска кратчайших путей \cite{guo2018reversible}.
+
+Эта работа посвящена еще одной задаче области обратимых вычислений ~--- обратимым структурам данных, реализующих функционал множества. В них обратимые поиск, вставка и удаление элементов выполняются эффективно по времени работы и памяти.
+
+Что уже есть: структуры данных с единственным представлением.
+Их уже исследовали до того, как начали изучать обратимые алгоритмы.
+Структуры данных с единственным представлением можно пробовать реализовывать обратимо, однако они имеют недостатки в виде своих асимптотик. Преимущество таких структур по сравнению со структурами с неединственным представлением в том, что при обратимой реализации они не требуют хранения какой-то дополнительной информации, помимо самой структуры.
+
+Снайдер в своих исследованиях \cite{snyder1977uniquely} показал, что для древовидных структур с уникальным в зависимости от размера представлением,
+выполняется оценка сложности $\Omega(\sqrt{n})$ на хотя бы одну из трёх операций (вставка/удаление/поиск), где $n$ ~--- количество хранящихся элементов.
+Также он привёл пример структуры, в которой эти операции имеют сложность $O(\sqrt{n})$. Андерсон и Оттман \cite{andersson1995new} получили улучшенный результат для структур с единственным представлением на графах с ограниченной максимальной степенью вершин:
+у них получилась нижняя асимптотическая оценка $\Omega(\sqrt[3]{n})$ на хотя бы одну из операций поиска или вставки и структура, на которой эта асимптотика достигается. Обратимая структура данных, реализующая множество и основанная на структуре Снайдера ~--- первый результат дипломной работы. Она также имеет асимптотики $O(\sqrt{n})$ времени вставки, удаления и поиска.
+
+Второй результат работы ~--- обратимая реализация декартова дерева, придуманного Зейделем и Арагон \cite{seidel1996randomized}. Декартово дерево ~--- двоичное дерево, в вершинах которого хранятся пары из значения и приоритетов, и которое является деревом поиска по значением и кучей по приоритетам. Оно обладает важным свойством: если все значения и приоритеты в вершинах различны, то декартово дерево на таких вершинах единственно. Будет показано, что можно реализовать обратимое декартово дерево, используя для выдачи приоритетов обратимый генератор псевдослучайных чисел, а матожидание временной асимптотики вставки, удаления и поиска в такой структуре равно $O(\log{n})$.
+
+\section{Модель обратимых вычислений}
+Существует стандарт для формулирования и написания обратимых программ ~--- язык программирования Янус (Janus), предложенный Лутцем и Дерби (1982).
+
+Все переменные в нём имеют целочисленный тип: \lstinline!int x!.
+Над ними есть базовые обратимые операции:
+\begin{center}
+  \lstinline!x <=> y!
+  \ \ \ \ \lstinline!x += e!
+  \ \ \ \ \lstinline!x -= e!
+  \ \ \ \ \lstinline!x ^= e!
+\end{center}
+Здесь \lstinline!e! ~--- любое арифметическое выражение, ссылающееся на константы и любые переменные кроме \lstinline!x!. 
+Благодаря этому значение этого выражения до и после выполнения оператора
+совпадают, что и позволяет выполнить обратный оператор.
+
+Для составного оператора, состоящего из нескольких операторов $s_1 \dots s_k$, обратный к нему ~--- обратные операторы, вызванные в обратном порядке:
+$s_k^{-1} \dots s_1^{-1}$.
+
+Также в модели есть поддержка условного оператора и циклов.
+Условный оператор
+\begin{center}
+  \lstinline!if! $e$ \lstinline!then! $s$ \lstinline!else! $t$ \lstinline!fi! $f$
+\end{center}
+имеет также выражение-постусловие, которое должно быть верно тогда и только тогда, когда отработала ветка \lstinline!then!.
+% Обратный оператор к нему выглядит так:
+% \begin{center}
+%   \lstinline!if! $f$ \lstinline!then! $s^{-1}$ \lstinline!else! $t^{-1}$ \lstinline!fi! $e$.
+% \end{center}
+
+Оператор цикла
+\begin{center}
+  \lstinline!from! $e$ \lstinline!do! $s$ \lstinline!loop! $t$ \lstinline!until! $f$.
+\end{center}
+выполняется так: в начале выполнения выражение $e$ должно быть истинно, затем циклически выполняется блок инструкций $t$, проверяется истинность $f$, и выполняется блок инструкций $t$. Завершается, когда выражение $f$ оказывается истинным. При этом для обратимости после каждой итерации цикла должно выполняться, что выражение $e$ неверно. 
+
+% Обращение оператора цикла:
+% \begin{center}
+%   \lstinline!from! $f$ \lstinline!do! $s^{-1}$ \lstinline!loop! $t^{-1}$ \lstinline!until! $e$.
+% \end{center}
+
+В расширениях языка Janus в программе можно объявлять процедуры, которые можно вызывать:
+\begin{center}
+\lstinline!procedure bin_search(int arr[], int arr_sz, int x)!
+\end{center}
+Аргументы в процедурах передаются по ссылке, внутри процедуры ~--- обратимый код над ними. В процедурах можно заводить локальные переменные: ключевое слово для создания локальной переменной ~--- \lstinline!local!, для удаления ~--- \lstinline!delocal!, по умолчанию создаваемые/удаляемые локальные переменные равны 0. 
+
+Процедуры вызывают с помощью ключевого слова \lstinline!call!. Также можно вызвать процедуру, обратную к данной, с помощью ключевого слова \lstinline!uncall!.
+
+В реализации алгоритмов, которые будут перечислены ниже, была использована обратимая динамическая память Демейна. В этой модели все аллоцируемые в памяти блоки имеют одинаковый размер, что подходит для хранения вершин дерева, так как каждая вершина также имеет константный размер и может быть помещена в блок.
+
+В языке программирования Янус процедуры инициализации памяти и выделения выглядят так. Процедура освобождения памяти ~--- обратная к процедуре выделения.
+
+\begin{lstlisting}
+// Demain's memory
+procedure initialize_memory(int memory[], int n, int first_segment)
+    first_segment+=1
+    local int i=1
+    from i=1 do
+        memory[i-1]+=i+8
+        i+=8
+    until i=8*(n-1)+1
+    delocal int i=8*(n-1)+1
+
+procedure malloc(int memory[], int first_segment, int p)
+    p<=>first_segment
+    first_segment<=>memory[p-1]
+\end{lstlisting}
+
+При такой реализации все аллоцируемые блоки имеют размер 8.
+
+\section{Обратимая реализация структуры Снайдера}
+
+Структура данных с единственным представлением, реализующая множество, была сформулирована Снайдером \cite{snyder1977uniquely}. Её можно интерпретировать так.
+
+Пусть $n$ ~--- количество хранимых элементов: $a_1 < a_2 < \dotsc < a_n$. Для числа $n$ будем поддерживать число $k(n)$ ~--- наименьшее натуральное число такое, что $n < \frac{k (k + 1)}{2} = 1 + 2 + \dotsc + k$. В дальнейших терминах структуры величина $k(n)$ будет равна количеству \textit{ветвей} в ней, увеличенному на 1. При добавлении элемента в структуру количество ветвей в ней не меняется или увеличивается на 1; при удалении элемента количество ветвей либо не меняется, либо уменьшается на 1. Также ведёт себя и $k(n)$: при увеличении $n$ на 1 значение $k(n)$ либо не меняется, либо увеличивается на 1. Далее везде $k(n)$ я буду обозначать как $k$, так как эта величина будет интересовать только для текущего количества $n$ элементов в структуре. 
+
+Тогда $n$ представимо единственным образом в следующем виде:
+
+\begin{equation}
+n = \frac{k (k + 1)}{2} - m = 1 + \dotsc + (m - 1) + (m + 1) + \dotsc + k,
+\label{eq.sqrt_set1}
+\end{equation}
+
+где $1 \le m < k$. Иными словами, $n$ единственным образом представляется в виде суммы $k - 1$ различных натуральных числа, не превосходящих $k$:
+
+\[
+n = c_1 + c_2 + \dotsc + c_{k-1}, \quad 1 \le c_1 < \dotsc < c_{k-1} \le k.
+\]
+
+Структура представляется следующим деревом. В ней $k-1$ ветвей, пронумерованных от $1$ до $k - 1$. К $j$-ой ветви последовательно  присоединяется $c_{k-j}$ элементов последовательности $a$ в порядке возрастания. То есть, к 1-ой ветви присоединяются $a_1, \dotsc, a_{c_{k-1}}$, к следующей ~--- $a_{c_{k-1}+1}, \dotsc , a_{c_{k-1}+c_{k-2}}$ и так далее, к последней ветви присоединяются последние $c_1$ элементов последовательности $a$ (как показано на рис.~\ref{f:sqrtset_example}). Также из каждой ветви, кроме последней, есть ссылка на следующую.
+
+\begin{figure}[t]
+	\centerline{\includegraphics[width=0.5\textwidth]{images/sqrtset_example.pdf}}
+	\caption{Пример устройства структуры для 7 элементов: $k = 4$; 3 ветви; $c_1 = 4, c_2 = 2, c_3 = 1$.}
+	\label{f:sqrtset_example}
+\end{figure}
+
+Поскольку $k = O(\sqrt{n})$, при такой конструкции количество ветвей ($k - 1$) и максимальная длина ветви ($k$) асимптотически равны $O(\sqrt{n})$. При этом для любых двух вершин, хранящих значения, выполняется важное свойство: если они в разных ветвях, то меньше значение в той вершине, чей номер ветви меньше. В случае, когда значения принадлежат одной ветви, меньше то, которое ближе к началу ветви. При дальнейших отсылках я буду называть это свойство свойством \textit{отсортированности}.
+
+В  обратимой реализации из каждой вершины-начала ветви я помимо ссылки на начало следующей ветви храню также ссылку на начало предыдущей ветви. А также, помимо ссылки на первый элемент последовательности ветви, ещё и ссылку на последний. Для вершин, хранящих значения последовательности $a$, помимо значений я храню ссылку на предыдущую и следующую вершину ветви (если они есть).
+
+В языке Janus хранение даннвх выглядит так: пусть \lstinline!memory! (\lstinline!mem!) ~--- используемая динамическая память, а \lstinline!ptr! ~--- указатель на вершину дерева. Тогда \lstinline!memory[ptr], memory[ptr + 1], ...! ~---  поля, которые хранятся в этой вершине. Для удобства восприятия я буду использовать обозначения с оператором \lstinline!->!: его нет в синтаксисе языка Янус, но псевдокод, написанный с помощью неё более лаконичен и компактен. Более подробные обозначения показаны в таблицах ~\ref{fig:branch_memory} и ~\ref{fig:value_memory}.
+
+\begin{table}[h]
+\centering
+\makebox[\textwidth][c]{%
+\begin{tabular}{|l|l|l|}
+\hline
+\textbf{Код на Янусе} & \textbf{Описание} & \textbf{Обозначение с \texttt{->}} \\
+\hline
+\texttt{memory[branch\_ptr]}     & следующая ветвь                  & \texttt{branch\_ptr->next\_branch}     \\
+\texttt{memory[branch\_ptr+1]}   & предыдущая ветвь                 & \texttt{branch\_ptr->prev\_branch}     \\
+\texttt{memory[branch\_ptr+2]}   & первая вершина в ветви           & \texttt{branch\_ptr->first\_node} \\
+\texttt{memory[branch\_ptr+3]}   & последняя вершина в ветви           & \texttt{branch\_ptr->last\_node}  \\
+\texttt{memory[branch\_ptr+4]}   & номер ветви           & \texttt{branch\_ptr->number}            \\
+\hline
+\end{tabular}
+}
+\caption{Соответствие между полями структуры ветви и их расположением в памяти.
+\texttt{branch\_ptr} -- указатель на вершину ветви.}
+\label{fig:branch_memory}
+\end{table}
+
+\begin{table}[h]
+\centering
+\makebox[\textwidth][c]{%
+\begin{tabular}{|l|l|l|}
+\hline
+\textbf{Код на Янусе} & \textbf{Описание} & \textbf{Обозначение с \texttt{->}} \\
+\hline
+\texttt{memory[node\_ptr]}     & следующая вершина    & \texttt{node\_ptr->next\_node}     \\
+\texttt{memory[node\_ptr+1]}   & предыдущая вершина   & \texttt{node\_ptr->prev\_node}     \\
+\texttt{memory[node\_ptr+2]}   & значение             & \texttt{node\_ptr->value} \\
+\hline
+\end{tabular}
+}
+\caption{Соответствие между полями вершины со значением и их расположением в памяти.
+\texttt{node\_ptr} -- указатель на вершину со значением.}
+\label{fig:value_memory}
+\end{table}
+
+\subsection{Обратимый поиск по значению}
+
+Поиск значения \lstinline!val! в структуре множества Снайдера можно реализовать с асимптотикой $O(\sqrt{n})$ в два этапа. На первом этапе необходимо определить последнюю ветвь, первое значение в которой не превосходит \lstinline!val!. Тогда, если значение \lstinline!val! хранится в структуре, то оно обязательно окажется в этой ветви, ведь во всех предыдущих ветвях значения строго меньше, а во всех последующих строго больше \lstinline!val!. Второй этап ~--- спуск по этой ветви, пока текущее значение меньше чем \lstinline!val!. Если вершина со значением \lstinline!val! есть в этой ветви, то она будет достигнута. Иначе, как только будет достигнута вершина со значением больше либо конец ветви, будет ясно, что значения \lstinline!val! в множестве нет.
+
+Обратимая процедура, выполняющая поиск по значению \lstinline!val! и возвращающая указатель на ветку и указатель на вершину с наименьшим значением, не меньшим \lstinline!val! (а если такой нет ~--- вершину с наибольшим значением), может быть реализована так:
+
+\begin{lstlisting}
+procedure search(int val, int first_branch, int memory[], int res_branch, int res_node)
+    local int tmp
+    if first_branch != 0 then // else set is empty
+        res_branch += first_branch
+        from res_branch = first_branch loop
+            tmp += res_branch->next_branch
+            res_branch <=> tmp
+            tmp -= res_branch->prev_branch
+        until res_branch->next_branch = 0 ||
+            res_branch->next_branch->first_node->value > val
+        
+        res_node += res_branch->first_node
+        from res_node = res_branch->first_node loop
+            tmp += res_node->next_node
+            res_node <=> tmp
+            tmp -= res_node->prev_node
+        until res_node->next_node = 0 ||
+            res_node->value >= val
+    fi first_branch != 0
+    delocal int tmp
+\end{lstlisting}
+Здесь \lstinline!first_branch! ~--- указатель на первую ветвь структуры, то есть её корень.
+Тогда процедура поиска вершины с заданным конкретным значением \lstinline!val! выглядит так:
+
+\begin{lstlisting}
+procedure find(int val, int first_branch, int memory[], int output_ptr)
+    local int res_branch, res_node
+    call search(val, first_branch, memory, res_branch, res_node)
+    
+    if res_node != 0 && res_node->value = val
+    then output_ptr += res_node
+    fi res_node != 0 && res_node->value = val
+
+    uncall search(val, first_branch, memory, res_branch, res_node)
+    delocal int res_branch, res_node
+\end{lstlisting}
+
+\subsection{Обратимая вставка значения}
+Вставка значения \lstinline!val! (и обратное к ней удаление), имеет более сложную реализацию. Она состоит из нескольких этапов.
+
+\begin{enumerate}
+\item Определить номер ветви, длина которой увеличится после вставки. В случае, если $n + 1 = \frac{k (k + 1)}{2}$, также необходимо добавить новую ветвь.
+\item В конец этой ветви добавить новую вершину со значением \lstinline!val!.
+\item После вставки в предыдущем пункте могло перестать выполняться свойство отсортированности структуры. Чтобы его восстановить, надо
+    \begin{enumerate}
+        \item Переместить вершину со значением \lstinline!val! в конец ветви, в которой она должна оказаться. Для этого нужно перемещать вершину на ветвь вправо, пока в ветви справа первая вершина имеет значение меньше чем \lstinline!val!, либо перемещать вершину на ветвь влево, пока в ветви слева последняя вершина больше чем \lstinline!val!.
+        \item После того как вершина с \lstinline!val! оказалась в нужной ветви, её нужно поднимать вверх по ней, меняя местами с предыдущей вершиной, пока в той значение больше \lstinline!val!.
+    \end{enumerate}
+\item В конце, чтобы избавиться от значений текущей ветви и указателя на вставленную вершину, нужно вызвать процедуру, обратную к поиску в структуре по значению (\lstinline!uncall search!). 
+\end{enumerate}
+
+Для всех пунктов покажем, как реализовать их обратимо.
+
+\begin{enumerate}
+    \item Вставка новой ветви ~--- просто добавление вершины в конец двусвязного списка ветвей. Выполняется за $O(\sqrt{n})$ операций, так как длина этого списка $O(\sqrt{n})$. Для итерирования по двусвязному списку ветвей будем использовать дополнительную процедуру, передвигающую текущий указатель на ветвь на \lstinline!steps! позиций вперед:
+    \begin{lstlisting}[xleftmargin=-2.8em]
+procedure iterate_to_next_branches(int cur_branch, int steps, int memory[])
+    local int i = 0, temp  = 0
+    from i = 0 loop
+        i += 1
+        temp += cur_branch->next_branch
+        cur_branch -= temp->prev_branch
+        cur_branch <=> temp
+    until i = steps
+    delocal int i = steps, temp = 0
+    \end{lstlisting}
+
+    Тогда процедура добавления новой ветви выглядит так:
+
+    \begin{lstlisting}[xleftmargin=-2.8em]
+procedure add_new_branch_if_needed(int branches_cnt, int set_size, int mem[], int first_segment, int first_branch)
+    local int cur_branch = 0, new_branch = 0
+    
+    if set_size + 1 = ((branches_cnt + 1) * (branches_cnt + 2)) / 2 then
+        if branches_cnt = 0 then
+            call malloc(mem, first_segment, first_branch)
+            first_branch->number += 1
+        else
+            cur_branch += first_branch
+            call iterate_to_next_branches(cur_branch, branches_cnt - 1, mem) // go to end
+            
+            call malloc(mem, first_segment, new_branch)
+
+            new_branch->number += cur_branch->number + 1
+            new_branch->prev_branch += cur_branch
+            cur_branch->next_branch <=> new_branch   
+
+            uncall iterate_to_next_branches(cur_branch, branches_cnt - 1, mem) // go back
+            cur_branch -= first_branch
+        fi branches_cnt = 0
+        branches_cnt += 1
+    fi set_size+1 = (branches_cnt * (branches_cnt+1)) / 2
+    
+    delocal int new_branch = 0, cur_branch = 0
+\end{lstlisting}
+    В аргументах процедуры \lstinline!set_size! $ = n$, а \lstinline!branches_cnt! ~--- количество ветвей ~--- равно $k - 1$.
+    
+    Номер ветви, которая удлинится, перед вставкой можно определить так. По представлению ~\ref{eq.sqrt_set1} количества $n$ элементов множества:
+
+\[    n = \frac{k (k + 1)}{2} - m = 1 + \dotsc + (m - 1) + (m + 1) + \dotsc + k,
+\]
+    где $1 \le m < k$. Если $m = 1$, то количество ветвей увеличится с $k - 1$ до $k$, и удлинится последняя ветвь, в которую добавится единственная вершина.  Иначе удлинится ветвь, длина которой была $m - 1$, а станет $m$, то есть $(m-1)$-ая ветвь с конца. В каждом из случаев получается, что удлиняется ветвь, номер которой с начала при нумерации с 0 равен
+\[
+    (k - 1) - (m - 1) =  n - \frac{k(k-1)}{2}.
+\]
+    Чтобы дойти от первой ветви до удлиняемой, нужно сделать именно столько переходов в следующую вершину. Обратимые процедуры \lstinline!count_branch_before! и \lstinline!count_branch_after! считают номер удлиняющейся ветви до и после вставки (отличие в том, что после вставки количество элементов \lstinline!set_size! увеличилось на 1, и количество ветвей \lstinline!branches_cnt!, возможно, тоже):
+
+    \begin{lstlisting}[xleftmargin=-2.8em]
+procedure count_branch_before(int branches_cnt, int set_size, int branch_to_add)
+    branch_to_add += set_size - (branches_cnt * (branches_cnt + 1)) / 2      
+
+procedure count_branch_after(int branches_cnt, int set_size, int branch_to_add)
+    local int bc = branches_cnt
+    if set_size = (bc * (bc + 1)) / 2
+    then bc -= 1
+    fi set_size = ((bc + 1) * (bc + 2)) / 2
+    
+    branch_to_add += (set_size - 1) - (bc * (bc + 1)) / 2
+        
+    if set_size = ((bc + 1) * (bc + 2)) / 2
+    then bc += 1
+    fi set_size = (bc * (bc + 1)) / 2
+    delocal int bc = branches_cnt
+\end{lstlisting}
+\begin{figure}[t]
+\centerline{\includegraphics[width=0.5\textwidth]{images/sqrtset_add_node_to_branch.pdf}}
+\caption{Результат операций 1 и 2 при добавлении значения $v$ в структуру из 7 элементов.}
+\label{f:sqrtset_inserting}
+\end{figure}
+
+    \item Добавление новой вершины со значением \lstinline!val! в удлиняемую ветвь. По двусвязному списку из ветвей нужно дойти до ветви с нужным номером, а затем вставить в её конец новую вершину. Прохождение до ветви затрачивает $O(\sqrt{n})$ операций, а вставка новой вершины выполняется за $O(1)$:
+    \begin{lstlisting}[xleftmargin=-2.8em]
+procedure add_new_node_in_branch(int number_of_branch_to_add, int cur_branch, int mem[], int first_segment, int val)
+    local int temp = 0, new_value_node = 0
+    
+    call iterate_to_next_branches(cur_branch, number_of_branch_to_add, mem)
+    
+    call malloc(mem, first_segment, new_value_node)
+    new_value_node->value += val
+    
+    if cur_branch->last_node = 0 then 
+        cur_branch->first_node += new_value_node
+        cur_branch->last_node <=> new_value_node
+    else
+        temp <=> cur_branch->last_node
+        temp->next_node += new_value_node
+        new_value_node->prev_node <=> temp
+        cur_branch->last_node <=> new_value_node
+    fi cur_branch->first_node = cur_branch->last_node
+    
+    delocal int temp = 0, new_value_node = 0
+\end{lstlisting}
+
+    \item Для удобства в дальнейшем определим обратимые процедуры вставки (удаления) вершины в начало или конец ветви:
+\begin{lstlisting}[xleftmargin=-2.8em]
+procedure insert_first_node_in_branch(int branch_ptr, int mem[], int node_ptr)
+    if branch_ptr->first_node = 0 then
+        branch_ptr->last_node += node_ptr
+    else
+        branch_ptr->first_node->prev_node += node_ptr
+        node_ptr->next_node <=> branch_ptr->first_node
+    fi branch_ptr->last_node = node_ptr
+    branch_ptr->first_node <=> node_ptr
+\end{lstlisting}
+\begin{lstlisting}[xleftmargin=-2.8em]
+procedure insert_last_node_in_branch(int branch_ptr, int mem[], int node_ptr)
+    if branch_ptr->first_node = 0 then
+        branch_ptr->first_node += node_ptr
+    else
+        branch_ptr->last_node->next_node += node_ptr
+        node_ptr->prev_node <=> branch_ptr->last_node
+    fi branch_ptr->first_node = node_ptr
+    branch_ptr->last_node <=> node_ptr
+\end{lstlisting}
+    В этих процедурах \lstinline!node_ptr! ~--- указатель на вставляемую вершину: поля \lstinline!next_node! и \lstinline!prev_node! у неё занулены, а в поле \lstinline!value! лежит \lstinline!val!. 
+
+    Теперь покажем, как обратимо реализовать передвижение вершины с новым значением \lstinline!val!, чтобы вернуть отсортированность вершин, в 2 этапа.
+    \begin{enumerate}
+        \item Передвижение вершины в ветвь, в которой она должна оказаться. Зафиксируем ветвь, в которой должна оказаться вершина с новым значением \lstinline!val!, пусть у неё номер $B$. Тогда во всех следующих ветвях (их номера больше $B$), все значения должны быть больше \lstinline!val!, а во всех предыдущих ветвях ~--- меньше. Пусть $L$ ~--- номер ветви, в конце которой сейчас находится новая вершина.
+
+        Если $L = B$, то вершина уже в искомой ветви, делать ничего не надо.
+
+        Если $L > B$, то заметим, что в конце ветви $L - 1$ находится вершина со значением, большим чем \lstinline!val!. Действительно, если это не так, то получится что все вершины левее ветви $L$ имеют значения меньше чем \lstinline!val!, а таких вершин $c_1 + \dotsc + c_{L-1}$. С другой стороны, из определения ветви $B$, вершин, которые имеют значения меньше чем \lstinline!val! строго меньше чем $c_1 + \dotsc + c_B$, а значит и меньше чем $c_1 + \dotsc + c_{L-1}$ так как $B < L$. В таком случае сдвинем новую вершину следующим образом: вытащим из ветви $L - 1$ последнюю вершину и вставим первой в ветвь $L$; из ветви $L$ вытащим последнюю вершину и вставим последней в $L - 1$. При такой манипуляции новая вершина оказывается в ветви левее, длины ветвей не меняются, все старые вершины продолжают находиться в отсортированном порядке.
+
+        Случай, когда $L < B$, аналогичен: в ветви $L + 1$ первая вершина имеет значение меньше чем \lstinline!val!, поэтому нужно отсоединить вершину с \lstinline!val! из конца ветви $L$ и вставить в конец ветви $L+1$, а из начала ветви $L+1$ отсоединить вершину и вставить в конец ветви $L$.
+
+        Эти манипуляции перемещения новой вершины на ветвь правее и левее обратимы (см. рис.~\ref{f:sqrtset_branch_moves}), процедура для перемещения влево \lstinline!move_left! такова:
+\noindent \begin{lstlisting}[xleftmargin=-5.4em]
+procedure move_left(int now_branch, int prev_branch, int mem[])
+    local int tmp_node
+    uncall insert_last_node_in_branch(prev_branch, mem, tmp_node)
+    call insert_first_node_in_branch(now_branch, mem, tmp_node)
+    uncall insert_last_node_in_branch(now_branch, mem, tmp_node)
+    call insert_last_node_in_branch(prev_branch, mem, tmp_node)
+    delocal int tmp_node
+\end{lstlisting}
+        Для перемещения вправо достаточно обратить процедуру перемещения влево. Вся процедура передвижения новой вершины по ветвям выглядит так:
+\begin{lstlisting}[xleftmargin=-5.4em]
+procedure move_above_branches(int branch_to_add, int now_branch, int val, int memory[])
+    local int temp_branch
+    now_branch += branch_to_add
+    if branch_to_add->next_branch != 0 && branch_to_add->next_branch->first_node->value < val // need to move right
+    then
+        temp_branch += now_branch->next_branch
+        from now_branch = branch_to_add loop
+            uncall move_left(temp_branch, now_branch, memory)
+            now_branch <=> temp_branch
+            temp_branch -= now_branch->prev_branch
+            temp_branch += now_branch->next_branch
+        until temp_branch = 0 || temp_branch->first_node->value > val
+        temp_branch -= now_branch->next_branch
+    else // need to move left or stay on the same branch
+        temp_branch += now_branch->prev_branch
+        from now_branch = branch_to_add loop
+            call move_left(now_branch, temp_branch, memory)
+            now_branch <=> temp_branch
+            temp_branch -= now_branch->next_branch
+            temp_branch += now_branch->prev_branch
+        until temp_branch = 0 || temp_branch->last_node->value < val
+        temp_branch -= now_branch->prev_branch
+    fi now_branch->number > branch_to_add->number
+    delocal int temp_branch
+\end{lstlisting}
+    В этой процедуре в \lstinline!temp_branch! хранится указатель на предыдущую ветку при передвижении влево, а при передвижении вправо ~--- указатель на следующую.
+\begin{figure}[t]
+\centerline{\includegraphics[width=0.5\textwidth]{images/sqrtset_branch_moves.pdf}}
+\caption{Схема перемещений новой вершины по ветвям структуры Снайдера.}
+\label{f:sqrtset_branch_moves}
+\end{figure}
+
+        \item После того как новая вершина оказалась в конце искомой ветви, осталось расположить её в ней так, чтобы у всех предыдущих вершин ветви значения были меньше чем \lstinline!val!, а у всех следующих ~--- больше. Поскольку все старые вершины уже отсортированы, достаточно менять новую вершину с предыдущей, пока значение предыдущей вершины больше чем \lstinline!val!:
+
+\begin{lstlisting}[xleftmargin=-5.4em]
+procedure bubble_up(int now_branch, int inserted_node, int mem[])
+    local int temp_node
+    from inserted_node->next_node = 0 loop
+        temp_node <=> inserted_node->prev_node
+
+        if inserted_node = now_branch->last_node then
+        now_branch->last_node += temp_node - inserted_node
+        else
+        inserted_node->next_node->prev_node += temp_node - inserted_node
+        fi temp_node = now_branch->last_node
+        
+        if temp_node = now_branch->first_node then
+        now_branch->first_node += inserted_node - temp_node
+        else
+        temp_node->prev_node->next_node += inserted_node - temp_node
+        fi inserted_node = now_branch->first_node
+    
+        inserted_node->prev_node <=> temp_node->prev_node
+        temp_node->prev_node <=> temp_node->next_node
+        temp_node->next_node <=> inserted_node->next_node
+        inserted_node->next_node <=> temp_node
+    until inserted_node->prev_node = 0 || inserted_node->prev_node->value < inserted_node->value
+    delocal int temp_node
+\end{lstlisting}
+    Всего $O(\sqrt{n})$ итераций цикла, каждая итерация занимает константное количество операций, поэтому эта процедура также работает за $O(\sqrt{n})$.
+
+    \end{enumerate}
+        
+    \item Для выполнения обратимости всей процедуры вставки необходимо почистить значения переменных \lstinline!now_branch! и \lstinline!inserted_node!, это можно сделать с помощью обратного вызова процедуры \lstinline!search!, которая имеет временную асимптотику $O(\sqrt{n})$.
+\end{enumerate}
+
+Суммируя вышеизложенные этапы, вся процедура вставки выглядит так:
+\begin{lstlisting}
+procedure insert(int val, int branches_cnt, int set_size, int first_branch, int memory[], int first_segment)
+    local int number_of_branch_to_add
+    local int branch_to_add // branch which length increases
+    local int now_branch // branch in which the new node is
+    local int inserted_node
+    
+    call count_branch_before(branches_cnt, set_size, number_of_branch_to_add)
+    call add_new_branch_if_needed(branches_cnt, set_size, memory, first_segment, first_branch)
+    
+    branch_to_add += first_branch
+    call add_new_node_in_branch(number_of_branch_to_add, branch_to_add, memory, first_segment, val)
+    
+    set_size += 1
+    
+    call move_above_branches(branch_to_add, now_branch, val, memory)
+    
+    inserted_node += now_branch->last_node 
+    call bubble_up(now_branch, inserted_node, memory)
+    
+    uncall search(val, first_branch, memory, now_branch, inserted_node)
+    
+    uncall iterate_to_next_branches(branch_to_add, number_of_branch_to_add, memory)
+    branch_to_add -= first_branch
+
+    uncall count_branch_after(branches_cnt, set_size, number_of_branch_to_add)
+    
+    delocal int inserted_node, now_branch, branch_to_add, number_of_branch_to_add
+\end{lstlisting}
+
+Вся процедура вставки разбита на последовательные обратимые процедуры, поэтому также является обратимой. Её обращение ~--- процедура удаления ~--- также разбивается на подпроцедуры: поиск вершины по значению, спуск этой вершины по своей ветке и перемещение этой вершины в конец ветки, из конца которой она и будет удалена. Временная асимптотика каждого из шагов процедуры $O(\sqrt{n})$, поэтому вставка работает тоже за $O(\sqrt{n})$.
+
+\section{Обратимое декартово дерево}
+
+В этом разделе будет сформулирована обратимая версия декартова дерева и показана её корректность. Операции удаления, вставки и поиска в нём асимптотически такие, как и в обычном декартовом дереве. Расходуемая память: $O(N)$, где $N$ ~--- максимальное количество узлов дерева за всё время работы. Используется обратимый линейный конгруэнтный генератор псевдослучайных чисел.
+
+Структура была реализована на языке Янус и выполняет функции множества. Также удалось её модифицировать, чтобы поддерживать свойства мультимножества, когда может храниться несколько элементов с одинаковым значением.
+
+Декартово дерево (Cartesian tree) ~--- древовидная структура данных, в каждой вершине которой содержится пара из значения и приоритета, являющаяся бинарным деревом по значениям и кучей по приоритетам.
+То есть для всякой вершины выполняется, что в её поддереве у всех вершин приоритет меньше, у всех вершин правого поддерева значение больше, у всех вершин левого ~--- меньше.
+
+\begin{figure}[h]
+    \centering
+    \includegraphics[width=0.5\textwidth]{images/test1.pdf}
+    \caption{Пример декартова дерева.}
+    \label{fig:treap_ex}
+\end{figure}
+
+\begin{statement} (Единственность декартова дерева)
+  Пусть $v_1, \dots, v_n$ ~--- попарно различные числа (значения) и $p_1,\dots, p_n$ попарно различные числа (приоритеты).
+  Тогда существует единственное декартово дерево на точках $(v_1, p_1), \dots, (v_n, p_n)$.
+\end{statement}
+\begin{proof}
+  Индукция по $n$. База для $n = 1$ очевидна. Переход:
+
+  Корень декартова дерева ~--- всегда вершина с максимальным приоритетом. Слева от неё, по определению, должны оказаться все вершины у которых значения меньше, справа ~--- у которых больше.
+  Поскольку для каждой вершины декартова дерева её поддерево также является декартовым, левое и правое поддеревья корня по индукционному предположению определены однозначно.
+\end{proof}
+
+Декартово дерево можно использовать для реализации множеств: значения использовать для сравнения элементов, а приоритеты назначать с помощью генераторов псевдослучайных чисел.
+
+\begin{statement}
+  Если приоритеты выбирать случайно, то математическое ожидание глубины вершины в декартовом дереве равна $O(\log(n))$, где $n$ ~--- число вершин.
+\end{statement}
+\begin{proof}
+  Пронумеруем вершины от $1$ до $n$ в порядке увеличения значений.
+
+  Для вершин $x$ и $y$ введём индикатор $a(x, y)$, который равен $1$, если $x$ является предком $y$, и $0$ в противном случае.
+  
+  Пусть $d_i$ ~--- глубина вершины $i$. Тогда
+  \[
+    \mathbb{E}\left[d_i\right] = \mathbb{E} \sum_{j \neq i} a(j, i) = \sum_{j \neq i} \mathbb{E} \left[ a(j, i) \right] = \sum_{j \neq i} \mathbb{P} \{ j \text{ является предком } i \}.
+  \]
+
+  Пусть $j < i$. Покажем, что вершина $j$ является предком $i$ тогда и только тогда когда у вершины $j$ наибольший приоритет среди вершин из отрезка $[j, i]$.
+  Если у какой-то вершины между $i$ и $j$ приоритет больше, то $i$ и $j$ лежат в разных поддеревьях и $j$ не может быть предком $i$. Если у $i$ приоритет больше, то тоже.
+  
+  В случае, когда у $j$ приоритет наибольший, предположим противное. Тогда наименьший общий предок вершин $i$ и $j$ находится выше, чем $j$. У этого предка номер либо меньше чем $j$, либо больше, чем $i$, так как приоритет у него больше чем у $j$. Но тогда обе вершины $i$ и $j$ лежат по одну сторону от него (справа либо слева соответственно), а значит он не является наименьшим общим предком, противоречие. 
+  
+  Для $j > i$ аналогично.
+
+  Получается,
+  \[\mathbb{P} \{ j \text{ является предком } i \} =\] \[ \mathbb{P} \{ j \text{ имеет наибольший приоритет среди } [\min(i, j), \max(i, j)] \} = \] \[\frac{1}{\max(i, j) - \min(i, j) + 1}.\]
+
+  Теперь
+  \[
+    \mathbb{E}\left[d_i\right] = \sum_{j<i} \frac{1}{i-j+1} + \sum_{j>i} \frac{1}{j-i+1} \le 2 \cdot \sum_{k=2}^n \frac{1}{k} = O(\log(n)).
+  \]
+\end{proof}
+
+Поскольку дерево является бинарным, поиск в нём выглядит так: начинаем в корне, и пока можем, спускаемся влево, если значение в текущей вершине больше искомого, иначе спускаемся вправо.
+Если спуститься в нужную сторону уже не получится, значит нужного элемента в дереве нет.
+Либо в какой-то момент придём в элемент с искомым значением. Математическое ожидание асимптотики времени такого поиска равно матожиданию глубины последнего листа в пути поиска, то есть $O(\log(n))$.
+
+Вставку и удаление элемента тоже можно выполнить с такой асимптотикой.
+Есть несколько подходов: с помощью операций split и merge, которые разбивают дерево на два по разделяющему значению и собирают обратно, а также можно  реализовывать с помощью вращений (Зейдель, Арагон, публикация декартова дерева \cite{seidel1996randomized}).
+Я остановлюсь на втором подходе, так как его удалось реализовать в обратимом виде.
+
+Вращение ~--- изменение структуры дерева, при котором в некотором его поддереве один из детей корня становится корнем, а сам корень ~--- ребенком нового корня.
+
+С помощью вращений можно несложно реализовать вставку элемента в дерево.
+Для этого нужно, начиная из корня дерева, спускаться вправо, если вставляемое значение больше, и влево, если меньше.
+Затем к вершине, в которую спустились, нужно присоединить лист со вставляемым значением и выдать ему приоритет. Поскольку у новой вершины приоритет может оказаться больше, чем у родителя, необходимо выполнять вращения, чтобы поднять её вверх вглубь дерева (вращение слева направо, если он является левым ребенком, иначе ~--- справа налево). Удаление можно реализовать обратно вставке также с помощью вращений: найдя вершину с нужным значением, с помощью вращений её нужно спустить вниз, чтобы она стала листом,и затем удалить.
+
+Зейдель и Арагон в своей статье \cite{seidel1996randomized}) показали, что если $n$ ~--- число элементов в дереве, а $l$ ~--- порядковый номер значения в вершине, то при удалении вершины с этим значением матожидание количества вращений справа налево равно $1 - \frac{1}{l}$, а вращений слева направо ~--- $1 - \frac{1}{n - l}$, поэтому матожидание общего количества значений, равное сумме этих двух величин, меньше 2. Также и при вставке ~--- матожидание числа вращений меньше 2.  Из этого факта следует, что временная асимптотика вставки (и обратного ей удаления) при помощи вращений также равна $O(\log(n))$, так как глубина добавляемого при вставке листа равна сумме матожидания конечной глубины вершины ($O(\log{n})$) и матожидания числа вращений (менее $2$).
+
+На практике в обычных реализациях множества декартово дерево не используется, так как другие реализации (например, на основе красно-чёрного дерева) показывают себя быстрее.
+
+\subsection{Обратимая выдача приоритетов для вершин}
+
+Будем использовать генератор псевдослучайных чисел по модулю $p \in \mathbb{N}$.
+Выбираются числа $a, c, s_0 \in \{0, \dots, p - 1\}, a > 1$, тогда в используемой псевдослучайной последовательности $s_0, s_1, \dots$ каждый новый член задаётся через предыдущий:
+\[s_{j+1} = (s_j \cdot a + c) \mod p.\]
+Можно удачно подобрать константы $a$ и $c$, чтобы длина периода в такой последовательности была $p - 1$. Далее пусть $M$ ~--- длина этого периода. Также можно вычислить константы $a'$ и $c'$, чтобы можно было выразить через текущий элемент последовательности предыдущий к нему:
+\[s_{j} = (s_{j+1} \cdot a' + c') \mod p.\]
+Вычислить $a'$ и $c'$ можно алгоритмом с асимптотикой $O(\log(p))$ с помощью возведения матрицы в степень.
+
+Обратимая процедура, переходящая от текущего значения $s$ псевдослучайной последовательности к следующему, такова:
+\begin{lstlisting}
+procedure get_next(int s, int a, int c, int a', int c', int m)
+    local int v = 0
+    v += (s * a + c) % m
+    s -= (v * a' + c') % m
+    s <=> v
+    delocal int v = 0
+\end{lstlisting}
+
+При обратимой реализации операции удаления и вставки являются обратными друг к другу.
+Соответственно, если выполнить последовательно вставку, а затем удаление одного и того же значения $x$, конфигурация структуры поменяться не должна.
+И наоборот, конфигурация дерева не должна меняться, если из него удалить значение $x$, а потом сразу вызвать вставку $x$.
+
+Это означает, что если при удалении по значению $x$ была удалена вершина $(x, y)$ с приоритетом $y$, то если сразу после этого вставить $x$, должна создаться такая же вершина $(x, y)$ с тем же приоритетом $y$. 
+
+Поскольку будет использоваться стек для хранения приоритетов, приведем код, с помощью которого его можно реализовать.
+
+\begin{lstlisting}
+procedure my_stack_push(int val, int my_stack[], int my_stack_size)
+    my_stack[my_stack_size] <=> val
+    my_stack_size += 1
+
+procedure my_stack_pop(int val, int my_stack[], int my_stack_size)
+    uncall my_stack_push(val, my_stack, my_stack_size)
+\end{lstlisting}
+
+Псевдокод для получения псевдослучайного приоритета такой:
+\begin{lstlisting}
+procedure get_priority(int new_prior,
+                int my_stack[], int my_stack_size,
+                int s, int a, int c, int a', int c', int m)
+    if my_stack_size = 0 then
+        new_prior += s
+        call get_next(s, a, c, a', c', m)
+    else
+        call my_stack_pop(new_prior, my_stack, my_stack_size)
+    fi my_stack_size = 0 && (new_prior * a + c) % m = s
+\end{lstlisting}
+
+Здесь \lstinline!new_prior! ~--- адрес, куда положится новый приоритет, а \lstinline!ST! ~--- стек, в котором хранятся приоритеты, когда их возвращают не по порядку, \lstinline!s! ~--- некоторое значение $s_j$ из псевдослучайной последовательности.
+Когда \lstinline!ST! не пуст, нужно снимать верхнее значение с него, иначе нужно брать $s_j$ и инкрементировать $j$, то есть сдвигаться в последовательности псевдослучайных чисел.
+
+\begin{statement} \label{stmt3}
+  Если в начале работы программы \lstinline!ST! пуст, то после любого количества вызовов \lstinline!call! и \lstinline!uncall! процедуры \lstinline!get_priority!, нижним элементом стека не может оказаться такое значение \lstinline!t!, что \lstinline!(t * a + c) % m = s!.
+\end{statement}
+\begin{proof}
+  Предположим, что такое случилось. Рассмотрим вызов процедуры, при котором нижним элементом стека стало \lstinline!t!. Поскольку в стеке элементы могут появляться только сверху при вызове \lstinline!push!, это могло быть только при обратном вызове процедуры в ветке \lstinline!else!, и стек перед этим был пуст.
+  Тогда перед этим должно было выполняться предусловие, так как стек пуст и вставляемое значение \lstinline!t! удовлетворяет тому, что \lstinline!(t * a + c) % m = s!. Противоречие.
+\end{proof}
+
+\begin{statement}(Обратимость процедуры выдачи приоритетов)
+
+  1) Пусть при вызове процедуры \lstinline!get_priority! был возвращен приоритет $x$. Если сразу после этого вызвать \lstinline!uncall! процедуры, то стек \lstinline!ST! и \lstinline!s! вернутся в исходное состояние, как было  до вызова процедуры.
+  
+  2) Для любого приоритета $x$, если вызвать \lstinline!uncall! процедуры \lstinline!get_priority!, а затем прямо вызвать процедуру эту же процедуру, то она вернёт тот же приоритет $x$, а стек \lstinline!ST! и \lstinline!s! вернутся в исходное состояние.
+\end{statement}
+\begin{proof}
+  1) Если перед вызовом процедуры стек был пуст, то было возвращено значение \lstinline!new_prior=s!, стек остался быть пустым, значение \lstinline!s! поменялось и стало равно \lstinline!(new_prior * a + c) % m!, поэтому постусловие было выполнено.
+  При последующем обратном вызове программа также попадёт в ветку \lstinline!then!, и вернет значение \lstinline!s! к исходному.
+
+  Если перед вызовом процедуры в стеке был один элемент \lstinline!t!, то по утверждению \ref{stmt3}, для него \lstinline{(t * a + c) % m != s}, поэтому после ветки \lstinline!else! постусловие не выполнено. Значит, при обратном вызове, он будет обратно положен в стек \lstinline!ST!.
+
+  Если перед вызовом процедуры в стеке было более одного элемента, то был снят верхний элемент и стек остался быть непустым. Поэтому постусловие не выполнено, и при обратном вызове элемент был обратно положен на стек \lstinline!ST!.
+
+  2) Если перед обратным вызовом стек не пуст, то приоритет $x$ будет положен на стек, стек останется не пуст, и при последующем прямом вызове значение $x$ будет снято обратно со стека, а значит \lstinline!ST! и \lstinline!s! не поменяются по сравнению с исходными.
+
+  Если перед обратным вызовом стек пуст и \lstinline{(x * a + c) % m != s}, то $x$ будет положен на стек \lstinline!ST!. При прямом вызове условие не выполнится, и значение $x$ будет также обратно снято со стека.
+
+  Если перед обратным вызовом стек пуст и \lstinline!(x * a + c) % m = s!, то поменяется только \lstinline!s!, его новое значение будет $x$, а стек останется пустым. Тогда при последующем прямом вызове процедуры будет возвращено это же значение $x$, а текущее число псевдослучайной последовательности \lstinline!s! обратно сдвинется вперёд.
+\end{proof}
+
+\subsection{Обратимый поиск вершины по значению}
+
+Также как и в структуре Снайдера вершины дерева хранятся в динамической памяти. Для удобства восприятия я буду также использовать обозначения с оператором \lstinline!->!:
+
+\begin{table}[h]
+\centering
+\makebox[\textwidth][c]{%
+\begin{tabular}{|l|l|l|}
+\hline
+\textbf{Код на Янусе} & \textbf{Описание} & \textbf{Обозначение с \texttt{->}} \\
+\hline
+\texttt{memory[node\_ptr]}     & значение                  & \texttt{node\_ptr->value}     \\
+\texttt{memory[node\_ptr+1]}   & приоритет                 & \texttt{node\_ptr->priority}     \\
+\texttt{memory[node\_ptr+2]}   & левый ребёнок вершины           & \texttt{node\_ptr->left} \\
+\texttt{memory[node\_ptr+3]}   & правый ребёнок вершины           & \texttt{node\_ptr->right}  \\
+\texttt{memory[node\_ptr+4]}   & родитель вершины           & \texttt{node\_ptr->up}            \\
+\hline
+\end{tabular}
+}
+\caption{Соответствие между полями вершины декартова дерева и их расположением в памяти.
+\texttt{node\_ptr} -- указатель на вершину в дереве.}
+\label{fig:treap_node_memory}
+\end{table}
+
+Будем использовать вспомогательную обратимую процедуру, которая делает следующее:
+по входному значению для поиска $x$, начиная из корня дерева, пока может, спускается влево, если значение в текущей вершине больше; спускается вправо, если значение в текущей вершине меньше, и, если совпадает, то останавливается.
+
+\begin{lstlisting}
+procedure go_down(int val, int memory[],
+                  int treap_root, int cur_ptr)
+    local int new_cur_ptr
+    from cur_ptr = treap_root loop
+        if cur_ptr->value < val then
+            new_cur_ptr += cur_ptr->right
+            cur_ptr <=> new_cur_ptr
+            new_cur_ptr -= cur_ptr->up
+        else
+            new_cur_ptr += cur_ptr->left
+            cur_ptr <=> new_cur_ptr
+            new_cur_ptr -= cur_ptr->up
+        fi cur_ptr->up->value < val
+    until cur_ptr->value = val
+    || (cur_ptr->value < val && cur_ptr->right = 0)
+    || (cur_ptr->value > val && cur_ptr->left = 0)
+    delocal int new_cur_ptr
+\end{lstlisting}
+
+Тогда процедура поиска вершины выглядит просто:
+
+\begin{lstlisting}
+procedure treap_find(int val, int memory[],
+        int treap_root, int treap_size, int output_ptr)
+    local int cur_ptr = treap_root
+    if treap_size > 0 then
+        call go_down(val, memory, treap_root, cur_ptr)
+        if cur_ptr->value = val
+        then output_ptr += cur_ptr
+        fi cur_ptr->value = val
+        uncall go_down(val, memory, treap_root, cur_ptr)
+    fi treap_size > 0
+    delocal int cur_ptr = treap_root
+\end{lstlisting}
+
+\subsection{Обратимая вставка значения}
+
+Над обратимым декартовым деревом будут две изменяющие его операции, являющиеся обращением друг друга:
+вставка значения, которого в дереве нет и удаление значения, которое в нём есть.
+
+Предварительно обратимо реализуем левое и правое вращения \ref{fig:rotations}. Это несложно сделать с помощью обмена указателями. Отметим, что обратная процедура к левому вращению ~--- правое вращение, поэтому на практике достаточно реализовывать только одно.
+
+\begin{figure}[h]
+    \centering
+    \includegraphics[width=0.8\textwidth]{images/rotations.pdf}
+    \caption{Два типа вращений}
+    \label{fig:rotations}
+\end{figure}
+
+\begin{lstlisting}
+procedure rotate_left_to_right(int p, int memory[])
+    local int p1 = p->left
+    local int temp = 0
+    
+    p->value <=> p1->value
+    p->priority <=> p1->priority
+    p->left <=> p->right
+    p->left <=> p1->left
+    p1->left <=> p1->right
+    
+    if p1->right != 0
+    then p1->right->up += (p1 - p)
+    fi p1->right != 0
+    
+    if p->left != 0
+    then p->left->up += (p - p1)
+    fi p->left != 0
+    
+    delocal int temp = 0
+    delocal int p1 = p->right
+
+procedure rotate_right_to_left(int p, int memory[])
+    uncall rotate_left_to_right(p, memory)
+\end{lstlisting}
+
+При вставке сначала алгоритм будет спускаться также как в процедуре \lstinline!go_down! ~--- пока не окажемся в вершине из которой не спуститься в нужную к $x$ сторону.
+Затем к вершине, в которую мы спустились, присоединим новую со значением $x$ и приоритетом, полученным из процедуры \lstinline!get_priority!.
+После этого присоединения дерево могло перестать быть кучей по приоритетам: у новой вершины приоритет может быть больше, чем у её родителя.
+Поэтому, пока у её родителя приоритет больше, будем выполнять вращения, чтобы поднимать эту вершину вверх (при вращении бинарность декартова дерева не портится).
+После чего поднимемся обратно в корень, вызвав обратную процедуру к \lstinline!go_down!, чтобы программа не сохраняла мусор.
+
+Обратная процедура к описанной ~--- удаление существующего значения в дереве: алгоритм спускается к удаляемой вершине, с помощью вращений спускает её вниз, пока она не станет листом, удаляет, и затем возвращается в корень.
+
+\begin{lstlisting}
+procedure treap_insert(int val,
+                       int memory[], int first_segment,
+                       int treap_root, int treap_size,
+                       int my_stack[], int my_stack_size,
+                       int pseudorandom_current_value, 
+                       int a, int c, int a', int c', int m)
+    local int new_node_ptr = 0
+    local int cur_ptr = 0
+    local int upper_ptr = 0
+    local int temp = 0
+    
+    call malloc(memory, first_segment, new_node_ptr)
+    new_node_ptr->value += val
+    call get_priority(temp, my_stack, my_stack_size, pseudorandom_current_value, a, c, a', c', m)
+    temp <=> new_node_ptr->priority
+    
+    if treap_root = 0 then
+        treap_root <=> new_node_ptr
+        treap_size += 1
+    else
+        cur_ptr += treap_root
+        
+        call go_down(val, memory, treap_root, cur_ptr)
+        
+        // insert new node as a leaf
+        if cur_ptr->value < val
+        then cur_ptr->right += new_node_ptr
+        else cur_ptr->left += new_node_ptr
+        fi memory[cur_ptr] < val
+        
+        new_node_ptr->up <=> cur_ptr
+        cur_ptr <=> new_node_ptr
+        
+        treap_size += 1
+        
+        // while new node's priority is greater than it's parent's one, call rotates
+        from cur_ptr->left = 0 && cur_ptr->right = 0 loop
+            upper_ptr += cur_ptr->up
+            if cur_ptr = upper_ptr->left then
+                call rotate_left_to_right(upper_ptr, memory)
+                cur_ptr -= upper_ptr->right
+            else
+                call rotate_right_to_left(upper_ptr, memory)
+                cur_ptr -= upper_ptr->left
+            fi upper_ptr->right != 0 && (upper_ptr->left = 0
+    || upper_ptr->left->priority < upper_ptr->right->priority)
+            
+            cur_ptr <=> upper_ptr
+        until cur_ptr = treap_root
+            || cur_ptr->priority < cur_ptr->up->priority
+        
+        uncall go_down(val, memory, treap_root, cur_ptr)
+        cur_ptr -= treap_root
+        
+    fi treap_size = 1
+    
+    delocal int temp = 0
+    delocal int upper_ptr = 0
+    delocal int cur_ptr = 0
+    delocal int new_node_ptr = 0
+\end{lstlisting}
+
+Вставка и удаление имеют временную асимптотику, пропорциональную глубине дерева, а значит математическое ожидание их времени работы $O(\log(n))$, где $n$ ~--- текущее количество хранимых элементов.
+
+\begin{statement}(Утверждение о правильности)
+  Если все приоритеты, выдаваемые вершинам, различны, то структура работает обратимо корректно.
+\end{statement}
+\begin{proof}
+  При вставке: алгоритм спускается в нужном направлении, затем создаёт новую вершину-лист. Затем выполняет вращения, пока её приоритет меньше, при вращениях бинарность дерева (если одна вершина правее другой, то в ней значение больше) не портится, и восстанавливается свойство структуры быть кучей по приоритетам. Из вставленной вершины алгоритм поднимается обратно в корень.
+
+  При удалении: алгоритм спускается в нужном направлении к существующей вершине. Затем, пока она не является листом, алгоритм выполняет вращения в ту сторону, где у текущей вершины ребенок с меньшим приоритетом (чтобы выше оказался ребенок с большим приоритетом и сохранилось свойство кучи по приоритету). После того, как текущая вершина становится листом, алгоритм удаляет её и затем возврщается в корень дерева.
+\end{proof}
+
+% Весь код структуры доступен по ссылке:
+% \href{https://github.com/AndrewRatkov/JanusFiles}{https://github.com/AndrewRatkov/JanusFiles}
+
+\subsection{Расширение для мультимножества}
+Описанная выше реализация не подойдёт для функционала мультимножества, в котором может быть несколько элементов с одним значением.
+Это объясняется тем, что если есть два элемента с одинаковым значением, то, один может находиться на пути между другим и корнем декартова дерева.
+А тогда неприменима процедура \lstinline!go_down!, которая останавливается при спуске из корня, как только увидит первый элемент с нужным значением. 
+
+Решение ~--- для каждого значения заводить свой стек из своих элементов. Тогда вставка будет класть новый элемент на этот стек, если уже были элементы такого значения.
+
+\section{Анализ производительности}
+В этом разделе я проведу сравнение двух вышеупомянутых структур на предмет количества операций и запросов к памяти при небольших размерах структур (при больших размерах структур по асимптотике выйгрывает обратимое декартово дерево).
+
+Также будем их сравнивать с ещё одной обратимой структурой, которую можно использовать как множество ~--- сортированным списком. Он представляет из себя двусвязный список на вершинах со значениями, которые отсортированы в порядке убывания.
+Процедуры поиска и вставки в нём выглядят так:
+
+\begin{table}[h]
+\centering
+\makebox[\textwidth][c]{%
+\begin{tabular}{|l|l|l|}
+\hline
+\textbf{Код на Янусе} & \textbf{Описание} & \textbf{Обозначение с \texttt{->}} \\
+\hline
+\texttt{memory[node\_ptr]}     & указатель на следующую вершину & \texttt{node\_ptr->next}     \\
+\texttt{memory[node\_ptr+1]}   & указатель на предыдущую вершину & \texttt{node\_ptr->prev}     \\
+\texttt{memory[node\_ptr+2]}   & значение вершины           & \texttt{node\_ptr->value} \\
+\hline
+\end{tabular}
+}
+\caption{Соответствие между полями вершины сортированного списка и их расположением в памяти.
+\texttt{node\_ptr} -- указатель на вершину в сортированном списке.}
+\label{fig:treap_node_memory}
+\end{table}
+
+\begin{lstlisting}
+procedure search(int memory[], int first_node, int val, int res_node)
+    local int temp_node
+    if first_node != 0 then
+        res_node += first_node
+        from res_node = first_node loop
+            temp_node += res_node->next
+            res_node <=> temp_node
+            temp_node -= res_node->prev
+        until memory[res_node] = 0 || res_node->value >= val
+    fi first_node != 0
+    delocal int temp_node
+
+procedure find(int memory[], int first_node, int val, int output_ptr)
+    local int res_node
+    if first_node != 0 then
+        call search(memory, first_node, val, res_node)
+        if res_node->value = val
+        then output_ptr += res_node
+        fi res_node->value = val
+        uncall search(memory, first_node, val, res_node)
+    fi first_node != 0    
+    delocal int res_node
+
+procedure insert(int memory[], int first_segment, int val, int first_node)
+    local int new_node, temp_node
+    
+    call malloc(memory, first_segment, new_node)
+    new_node->value += val
+
+    if first_node != 0
+    then first_node->next += new_node
+    fi first_node != 0
+
+    new_node->next <=> first_node
+    first_node += new_node
+    
+    from new_node = first_node loop
+        temp_node += new_node->next
+        new_node->next <=> temp_node->next
+        
+        if first_node = new_node
+        then temp_node->next <=> first_node
+        else temp_node->next <=> new_node->prev->next
+        fi first_node = temp_node
+        
+        temp_node->prev <=> new_node->prev
+        if new_node->next != 0
+        then new_node->next->prev <=> new_node->prev
+        else new_node->prev += temp_node - new_node
+        fi new_node->next != 0
+        
+        temp_node -= new_node->prev
+        
+    until new_node->next = 0 || new_node->next->value > val    
+    
+    uncall search(memory, first_node, val, new_node)
+    
+    delocal int temp_node, new_node
+\end{lstlisting}
+
+
+\subsection{Сравнение производительности при поиске элементов}
+Замеры производились одинаково для всех структур: для каждого из размеров $1, 2, 4, \dotsc, 512$ каждую из структур заполняли соответствующим количеством элементов, затем вызывали поиск каждого из элементов и считали среднее количество потраченных в программах операций.
+
+Результаты замеров представлены на графике ~\ref{fig:bench_find}. Он показывает, что для поиска в среднем используется меньшее количество операций на обратимой структуре, полученной из структуры Снайдера, при количестве элементов до 256. При большем количестве элементов выйгрывает обратимое декартово дерево: поиск в нём выполняется быстрее.
+
+\subsection{Сравнение производительности при вставке элементов}
+
+\begin{figure}[t]
+	\centerline{\includegraphics[width=0.9\textwidth]{images/comparison_find.jpg}}
+	\caption{Сравнение скорости поиска в обратимых структурах при количестве элементов $1,2,4,\dotsc, 512$.}
+	\label{fig:bench_find}
+\end{figure}
+
+\begin{figure}[t]
+	\centerline{\includegraphics[width=0.9\textwidth]{images/comparison_insert_small_2.jpg}}
+	\caption{Сравнение скорости вставки в структуры при количестве элементов до 100.}
+	\label{fig:bench_small}
+\end{figure}
+
+\begin{figure}[t]
+	\centerline{\includegraphics[width=0.9\textwidth]{images/comparison_insert.jpg}}
+	\caption{Сравнение скорости вставки в обратимых структурах при количестве элементов $1,2,4,\dotsc, 512$.}
+	\label{fig:bench_insert}
+\end{figure}
+
+Анализ производительности производился следующим способом. Была сгенерирована последовательность случайных операций, одинаковая для всех структур, следующим образом. Для каждого исследуемого размера структуры сперва с помощью вставок псевдослучайных чисел размер структуры увеличивался до степени двойки, а затем фиксированное ($\approx 10000$) число раз циклически производились вставка произвольного числа, которого нет в множестве и удаление произвольного числа, которое в множестве есть. В конце считалось среднее количество затраченных ресурсов на вставку/удаление элемента в структуру.
+
+Результаты замеров представлены на графиках ~\ref{fig:bench_small} и ~\ref{fig:bench_insert}. Обратимое декартово дерево требует меньшее количество операций, чем обратимая корневая структура Снайдера, даже при маленьких количествах хранимых элементов, однако уступает сортированному списку при небольших (до 16) размерах множества. Это можно объяснить более простой реализацией обратимого декартова по сравнению с корневой структурой.
+
+График ~\ref{fig:bench_small} подтверждает ожидаемое: рост числа операций при вставке в обратимое декартово дерево ведет себя логарифмически, вставка в сортированный список ~--- линейно, а вставка в обращённую структуру Снайдера растёт пропорционально $\sqrt{n}$. При этом для неё рост не монотонен. Это объясняется тем, что ожидаемое число итераций при перемещении новой вершины по ветвям, а затем внутри, зависит от номера удлиняемой ветви. В частности, если при вставке создается новая ветвь с единственной вершиной, такая величина больше, чем если бы удлинялась какая-либо другая ветвь. 
+
+
+\section{Заключение}
+
+Получены и реализованы две обратимые структуры данных, реализующие множество: для одной ~--- обращенной структуры Снайдера ~--- все операции выполняются с временной асимптотикой $O(\sqrt{n})$, для обратимого декартова дерева их ожидаемое время работы $O(\log{n})$.
+
+Тем не менее существуют и другие известные структуры данных, которые реализуют множество и имеют асимптотики $O(\log{n})$ для вставки и удаления, например, AVL-дерево и красно-чёрное дерево. Вопрос, можно ли придумать для них обратимую реализацию, и поменяются ли асимптотики операций при таком обращении, является открытым.
+
+Попытки придумать обратимую реализацию AVL-дерева в рамках этой работы успехом не увенчались. В статье об энергоэффективных алгоритмах Э.Демейн и др. привели пример AVL-дерева, операции над которым расходуют 0 энергии, однако в той структуре вставка и удаление не являются обращениями друг друга.
+
+\clearpage
+% \bibliographystyle{plain}
+\bibliographystyle{unsrt}
+\bibliography{main}
+
+
+
+% \begin{thebibliography}{99}
+
+% \bibitem{Angluin} D. Angluin,
+% 	\href{https://doi.org/10.1145/322326.322334}
+% 	{``Inference of Reversible Languages''},
+% 	\emph{Journal of the ACM},
+% 	29:3 (1982), 741--765.
+
+
+
+% \end{thebibliography}
+
+\end{document}

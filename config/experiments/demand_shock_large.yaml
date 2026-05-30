@@ -29,7 +29,7 @@ government:
   - threshold: 50
     rate: 0.35
 llm:
-  backend_type: eliza
+  backend_type: deepseek
   model_name: deepseek/deepseek-v3.2
   temperature: 0.7
   max_concurrency: 50
